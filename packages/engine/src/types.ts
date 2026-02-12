@@ -12,6 +12,7 @@ export interface Piece {
   type: UnitType;
   player: Player;
   position: Position;
+  hasMoved: boolean;
 }
 
 export type MoveType =

@@ -136,6 +136,7 @@ describe("getPieceAt / setPieceAt / removePieceAt", () => {
       type: "footman",
       player: "white",
       position: { col: 3, row: "C" },
+      hasMoved: false,
     };
     setPieceAt(board, { col: 3, row: "C" }, piece);
     expect(getPieceAt(board, { col: 3, row: "C" })).toBe(piece);
@@ -148,6 +149,7 @@ describe("getPieceAt / setPieceAt / removePieceAt", () => {
       type: "archer",
       player: "black",
       position: { col: 5, row: "F" },
+      hasMoved: false,
     };
     setPieceAt(board, { col: 5, row: "F" }, piece);
     const removed = removePieceAt(board, { col: 5, row: "F" });

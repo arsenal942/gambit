@@ -148,6 +148,7 @@ export function setupInitialBoard(): Board {
         type,
         player,
         position: { ...pos },
+        hasMoved: false,
       };
       setPieceAt(board, pos, piece);
     }
