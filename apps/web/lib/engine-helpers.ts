@@ -1,6 +1,20 @@
 import type { Position, Piece, Move, Player } from "@gambit/engine";
 import { TILE_SIZE, ROWS } from "./constants";
 
+// Board flip mode: when true, row K is at bottom and row A is at top.
+// Set by GameBoard before each render cycle.
+let flipMode = false;
+
+/** Set the board flip mode. Called by GameBoard before rendering. */
+export function setFlipMode(flip: boolean): void {
+  flipMode = flip;
+}
+
+/** Get current flip mode. */
+export function getFlipMode(): boolean {
+  return flipMode;
+}
+
 /** Convert a Position to a display label like "A1" or "F10". */
 export function posToLabel(pos: Position): string {
   return `${pos.row}${pos.col}`;
@@ -11,16 +25,18 @@ export function posToSvgX(pos: Position): number {
   return (pos.col - 1) * TILE_SIZE;
 }
 
-/** Convert a Position to SVG y coordinate. Row A at bottom, K at top. */
+/** Convert a Position to SVG y coordinate. Respects flip mode. */
 export function posToSvgY(pos: Position): number {
   const rowIndex = ROWS.indexOf(pos.row);
-  return (10 - rowIndex) * TILE_SIZE;
+  return flipMode ? rowIndex * TILE_SIZE : (10 - rowIndex) * TILE_SIZE;
 }
 
 /** Convert SVG coordinates to a Position, or null if out of bounds. */
 export function svgToPos(svgX: number, svgY: number): Position | null {
   const colIndex = Math.floor(svgX / TILE_SIZE);
-  const rowIndex = 10 - Math.floor(svgY / TILE_SIZE);
+  const rowIndex = flipMode
+    ? Math.floor(svgY / TILE_SIZE)
+    : 10 - Math.floor(svgY / TILE_SIZE);
   if (colIndex < 0 || colIndex > 9 || rowIndex < 0 || rowIndex > 10) return null;
   return { col: colIndex + 1, row: ROWS[rowIndex] };
 }

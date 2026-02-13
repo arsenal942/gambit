@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@gambit/engine"],
+  transpilePackages: ["@gambit/engine", "@gambit/shared"],
 };
 
 export default nextConfig;
