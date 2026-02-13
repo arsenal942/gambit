@@ -10,6 +10,7 @@ export interface PlayerInfo {
   color: Player;
   connected: boolean;
   disconnectedAt: number | null;
+  userId: string | null;
 }
 
 export interface GameRoom {
@@ -29,11 +30,13 @@ export interface GameRoom {
 
 export interface CreateGamePayload {
   preferredColor?: Player;
+  supabaseToken?: string;
 }
 
 export interface JoinGamePayload {
   gameId: string;
   playerToken?: string;
+  supabaseToken?: string;
 }
 
 export interface MakeMovePayload {
@@ -94,6 +97,7 @@ export interface JoinGameResponse {
   playerToken?: string;
   gameState?: GameState;
   roomStatus?: RoomStatus;
+  opponentUsername?: string | null;
   error?: string;
 }
 
@@ -125,7 +129,11 @@ export interface DrawDeclinedPayload {
 }
 
 export interface ServerToClientEvents {
-  game_started: (payload: { gameState: GameState }) => void;
+  game_started: (payload: {
+    gameState: GameState;
+    whiteUsername: string | null;
+    blackUsername: string | null;
+  }) => void;
   game_updated: (payload: GameUpdatedPayload) => void;
   move_rejected: (payload: MoveRejectedPayload) => void;
   game_over: (payload: GameOverPayload) => void;

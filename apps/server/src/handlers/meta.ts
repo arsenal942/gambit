@@ -10,6 +10,7 @@ import type {
 import { forfeit, offerDraw, type Player } from "@gambit/engine";
 import { getRoom } from "../rooms.js";
 import { authenticatePlayer } from "../util/auth.js";
+import { persistGameRecord } from "../persistence/games.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -36,6 +37,9 @@ export function handleForfeit(socket: GameSocket, io: GameServer) {
         winner: newState.winner,
         winCondition: newState.winCondition,
       });
+      persistGameRecord(room, newState.winner, newState.winCondition).catch(
+        (e) => console.error("Persistence error:", e),
+      );
     } catch {
       // Game already ended
     }
@@ -93,6 +97,9 @@ export function handleAcceptDraw(socket: GameSocket, io: GameServer) {
         winner: null,
         winCondition: "draw",
       });
+      persistGameRecord(room, null, "draw").catch(
+        (e) => console.error("Persistence error:", e),
+      );
     } catch {
       socket.emit("error", { message: "Draw could not be finalized" });
     }

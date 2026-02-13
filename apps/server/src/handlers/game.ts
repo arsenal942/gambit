@@ -9,21 +9,38 @@ import type {
 } from "@gambit/shared";
 import { createRoom, getRoom, addPlayerToRoom } from "../rooms.js";
 import { authenticatePlayer } from "../util/auth.js";
+import { verifySupabaseJwt } from "../util/jwt.js";
+import { supabaseAdmin } from "../lib/supabase.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
+async function fetchUsername(userId: string | null): Promise<string | null> {
+  if (!userId || !supabaseAdmin) return null;
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("username")
+    .eq("id", userId)
+    .single();
+  return data?.username ?? null;
+}
+
 export function handleCreateGame(socket: GameSocket) {
-  return (
+  return async (
     payload: CreateGamePayload,
     callback: (resp: GameCreatedResponse) => void,
   ) => {
     try {
+      const userId = payload.supabaseToken
+        ? await verifySupabaseJwt(payload.supabaseToken)
+        : null;
+
       const room = createRoom();
       const { color, playerToken } = addPlayerToRoom(
         room,
         socket.id,
         payload.preferredColor,
+        userId,
       );
 
       socket.join(room.id);
@@ -44,7 +61,7 @@ export function handleCreateGame(socket: GameSocket) {
 }
 
 export function handleJoinGame(socket: GameSocket, io: GameServer) {
-  return (
+  return async (
     payload: JoinGamePayload,
     callback: (resp: JoinGameResponse) => void,
   ) => {
@@ -75,12 +92,18 @@ export function handleJoinGame(socket: GameSocket, io: GameServer) {
         // Notify opponent of reconnection
         socket.to(room.id).emit("opponent_reconnected");
 
+        const opponentColor = color === "white" ? "black" : "white";
+        const opponentUsername = await fetchUsername(
+          room.players[opponentColor]?.userId ?? null,
+        );
+
         callback({
           success: true,
           color,
           playerToken: payload.playerToken,
           gameState: room.gameState,
           roomStatus: room.status,
+          opponentUsername,
         });
         return;
       }
@@ -94,8 +117,22 @@ export function handleJoinGame(socket: GameSocket, io: GameServer) {
     }
 
     try {
-      const { color, playerToken } = addPlayerToRoom(room, socket.id);
+      const userId = payload.supabaseToken
+        ? await verifySupabaseJwt(payload.supabaseToken)
+        : null;
+
+      const { color, playerToken } = addPlayerToRoom(
+        room,
+        socket.id,
+        undefined,
+        userId,
+      );
       socket.join(room.id);
+
+      const opponentColor = color === "white" ? "black" : "white";
+      const opponentUsername = await fetchUsername(
+        room.players[opponentColor]?.userId ?? null,
+      );
 
       callback({
         success: true,
@@ -103,11 +140,22 @@ export function handleJoinGame(socket: GameSocket, io: GameServer) {
         playerToken,
         gameState: room.gameState,
         roomStatus: room.status,
+        opponentUsername,
       });
 
       // If room is now full (addPlayerToRoom mutates status), notify both
       if ((room.status as string) === "playing") {
-        io.to(room.id).emit("game_started", { gameState: room.gameState });
+        const whiteUsername = await fetchUsername(
+          room.players.white?.userId ?? null,
+        );
+        const blackUsername = await fetchUsername(
+          room.players.black?.userId ?? null,
+        );
+        io.to(room.id).emit("game_started", {
+          gameState: room.gameState,
+          whiteUsername,
+          blackUsername,
+        });
       }
     } catch (e) {
       callback({

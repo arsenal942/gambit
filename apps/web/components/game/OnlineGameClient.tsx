@@ -61,6 +61,7 @@ export function OnlineGameClient({
     opponentDisconnectGraceMs,
     drawOffer,
     isMyTurn,
+    opponentUsername,
     forfeitGame,
     offerDrawGame,
     acceptDraw,
@@ -180,6 +181,11 @@ export function OnlineGameClient({
         {playerColor && (
           <div className="rounded-lg bg-gray-800 px-4 py-2 text-center text-sm font-semibold text-gray-300">
             You are {playerName(playerColor)}
+            {opponentUsername && (
+              <span className="block mt-1 text-xs font-normal text-gray-500">
+                vs {opponentUsername}
+              </span>
+            )}
           </div>
         )}
 

@@ -16,3 +16,4 @@ out/
 
 # Debug logs
 npm-debug.log*
+google_oauth_secret.json
