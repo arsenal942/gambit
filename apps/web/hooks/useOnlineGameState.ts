@@ -167,6 +167,9 @@ export function useOnlineGameState(): OnlineGameState {
             if (response.success && response.gameState) {
               setGameState(response.gameState);
             }
+            if (response.success && response.roomStatus === "waiting") {
+              setOnlinePhase("waiting");
+            }
           },
         );
       }
@@ -282,9 +285,11 @@ export function useOnlineGameState(): OnlineGameState {
           setPlayerColor(targetGameId, response.color);
           if (response.gameState) {
             setGameState(response.gameState);
-            setOnlinePhase("playing");
-          } else {
+          }
+          if (response.roomStatus === "waiting") {
             setOnlinePhase("waiting");
+          } else {
+            setOnlinePhase("playing");
           }
         } else {
           setError(response.error ?? "Failed to join game");

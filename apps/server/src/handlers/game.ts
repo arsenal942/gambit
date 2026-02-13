@@ -80,6 +80,7 @@ export function handleJoinGame(socket: GameSocket, io: GameServer) {
           color,
           playerToken: payload.playerToken,
           gameState: room.gameState,
+          roomStatus: room.status,
         });
         return;
       }
@@ -101,6 +102,7 @@ export function handleJoinGame(socket: GameSocket, io: GameServer) {
         color,
         playerToken,
         gameState: room.gameState,
+        roomStatus: room.status,
       });
 
       // If room is now full (addPlayerToRoom mutates status), notify both

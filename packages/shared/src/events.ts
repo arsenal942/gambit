@@ -93,6 +93,7 @@ export interface JoinGameResponse {
   color?: Player;
   playerToken?: string;
   gameState?: GameState;
+  roomStatus?: RoomStatus;
   error?: string;
 }
 
