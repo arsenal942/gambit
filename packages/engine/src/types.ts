@@ -46,7 +46,7 @@ export type CapturePointControl = Record<string, Player | null>;
 
 export type RiverStatus = "behind" | "at" | "beyond";
 
-export type GamePhase = "playing" | "ended";
+export type GamePhase = "playing" | "awaitingPromotion" | "awaitingRansom" | "ended";
 
 export interface GameState {
   board: Board;
@@ -60,4 +60,63 @@ export interface GameState {
   gamePhase: GamePhase;
   winner: Player | null;
   winCondition: string | null;
+  pendingPromotion: { pieceId: string } | null;
+  pendingRansom: { pieceId: string; capturedPieceId: string } | null;
+}
+
+// ── Action types (input to executeMove) ──────────────────────────────
+
+export type GameAction =
+  | MoveAction
+  | CaptureAction
+  | PushbackAction
+  | LongshotAction
+  | PromotionAction
+  | DeclinePromotionAction
+  | RansomAction
+  | DeclineRansomAction;
+
+export interface MoveAction {
+  type: "move";
+  pieceId: string;
+  to: Position;
+}
+
+export interface CaptureAction {
+  type: "capture";
+  pieceId: string;
+  to: Position;
+}
+
+export interface PushbackAction {
+  type: "pushback";
+  pieceId: string;
+  targetPieceId: string;
+  pushDirection: [number, number];
+}
+
+export interface LongshotAction {
+  type: "longshot";
+  pieceId: string;
+  targetPosition: Position;
+}
+
+export interface PromotionAction {
+  type: "promotion";
+  capturedPieceId: string;
+  placementPosition: Position;
+}
+
+export interface DeclinePromotionAction {
+  type: "declinePromotion";
+}
+
+export interface RansomAction {
+  type: "ransom";
+  capturedPieceId: string;
+  placementPosition: Position;
+}
+
+export interface DeclineRansomAction {
+  type: "declineRansom";
 }
