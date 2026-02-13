@@ -23,6 +23,7 @@ export function createRoom(): GameRoom {
     createdAt: Date.now(),
     pendingDrawOffer: null,
     disconnectTimers: new Map(),
+    supabaseGameId: null,
   };
   rooms.set(id, room);
   return room;

@@ -9,6 +9,7 @@ interface GameRecord {
   result: string | null;
   win_condition: string | null;
   ended_at: string | null;
+  moves_json: unknown[] | null;
   white_profile: { username: string } | null;
   black_profile: { username: string } | null;
 }
@@ -70,6 +71,7 @@ export default async function ProfilePage({
       result,
       win_condition,
       ended_at,
+      moves_json,
       white_profile:profiles!games_white_player_id_fkey(username),
       black_profile:profiles!games_black_player_id_fkey(username)
     `,
@@ -137,10 +139,14 @@ export default async function ProfilePage({
         <div className="space-y-2">
           {(games as unknown as GameRecord[]).map((game) => {
             const { label, color } = formatResult(game, profile.id);
+            const moveCount = Array.isArray(game.moves_json)
+              ? game.moves_json.length
+              : 0;
             return (
-              <div
+              <Link
                 key={game.id}
-                className="flex items-center justify-between rounded-lg bg-gray-800 px-4 py-3"
+                href={`/game/${game.id}/replay`}
+                className="flex items-center justify-between rounded-lg bg-gray-800 px-4 py-3 transition-colors hover:bg-gray-700"
               >
                 <div className="flex items-center gap-3">
                   <span className={`text-sm font-bold ${color}`}>{label}</span>
@@ -149,6 +155,7 @@ export default async function ProfilePage({
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span>{moveCount} moves</span>
                   {game.win_condition && (
                     <span className="capitalize">{game.win_condition}</span>
                   )}
@@ -158,7 +165,7 @@ export default async function ProfilePage({
                     </span>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
