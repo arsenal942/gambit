@@ -13,6 +13,7 @@
     "@gambit/engine": "*",
     "@gambit/shared": "*",
     "@supabase/supabase-js": "^2.95.3",
+    "dotenv": "^17.3.1",
     "nanoid": "^5.0.0",
     "socket.io": "^4.7.0"
   },
