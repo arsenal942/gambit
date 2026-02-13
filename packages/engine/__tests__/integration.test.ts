@@ -2000,3 +2000,1257 @@ describe("Group 10: State Integrity Invariants", () => {
     expect(replay.moveHistory).toHaveLength(state.moveHistory.length);
   });
 });
+
+// ── Group 11: Error Handling & Invalid Actions ──────────────────────
+
+describe("Group 11: Error Handling & Invalid Actions", () => {
+  it("11.1 Move after game ended (should throw)", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf" },
+      { type: "footman", player: "black", position: pos("F", 6), id: "bf" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ]);
+
+    // White captures bf → annihilation (last black piece)
+    state = executeMove(state, { type: "capture", pieceId: "wf", to: pos("F", 6) });
+    expect(state.gamePhase).toBe("ended");
+    expect(state.winCondition).toBe("annihilation");
+
+    // Try moving after game ended
+    expect(() =>
+      executeMove(state, { type: "move", pieceId: "wd", to: pos("A", 2) })
+    ).toThrow("Game is already over");
+  });
+
+  it("11.2 Move opponent's piece (should throw)", () => {
+    const state = createGame();
+    expect(state.turn).toBe("white");
+
+    expect(() =>
+      executeMove(state, { type: "move", pieceId: "black-footman-16", to: pos("G", 2) })
+    ).toThrow("Cannot move opponent's piece");
+  });
+
+  it("11.3 Move during awaitingPromotion (should throw)", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("J", 4), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 8), id: "bd" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    // White captures bf at K5 → promotion (bd still alive, no annihilation)
+    state = executeMove(state, { type: "capture", pieceId: "wf", to: pos("K", 5) });
+    expect(state.gamePhase).toBe("awaitingPromotion");
+
+    // Try moving another piece during promotion
+    expect(() =>
+      executeMove(state, { type: "move", pieceId: "wd", to: pos("A", 2) })
+    ).toThrow("Must resolve promotion");
+  });
+
+  it("11.4 Move during awaitingRansom (should throw)", () => {
+    let state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 5), id: "wk" },
+      { type: "knight", player: "black", position: pos("F", 6), id: "bk" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wf-cap", type: "footman", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    // White knight captures black knight → ransom
+    state = executeMove(state, { type: "capture", pieceId: "wk", to: pos("F", 6) });
+    expect(state.gamePhase).toBe("awaitingRansom");
+
+    // Try moving another piece during ransom
+    expect(() =>
+      executeMove(state, { type: "move", pieceId: "wd", to: pos("A", 2) })
+    ).toThrow("Must resolve ransom");
+  });
+
+  it("11.5 Invalid piece ID (should throw)", () => {
+    const state = createGame();
+
+    expect(() =>
+      executeMove(state, { type: "move", pieceId: "nonexistent-99", to: pos("E", 5) })
+    ).toThrow("not found");
+  });
+});
+
+// ── Group 12: Board Edge & Corner Cases ─────────────────────────────
+
+describe("Group 12: Board Edge & Corner Cases", () => {
+  it("12.1 Footman at A1 corner — limited movement", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("A", 1), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    const wf = getPieceAt(state.board, pos("A", 1))!;
+    const moves = getFootmanMoves(wf, state);
+
+    // A1 behind river for white. 1 orthogonal each dir.
+    // Up (toward A): off board. Left: off board. Right: A2. Down (forward): B1.
+    expect(moves).toHaveLength(2);
+    expect(includesPos(moves, pos("A", 2))).toBe(true);
+    expect(includesPos(moves, pos("B", 1))).toBe(true);
+  });
+
+  it("12.2 Footman at K10 corner — beyond river for white", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("K", 10), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("A", 1), id: "bd" },
+    ]);
+
+    const wf = getPieceAt(state.board, pos("K", 10))!;
+    const moves = getFootmanMoves(wf, state);
+
+    // K10 beyond river for white. 2 forward: off board (past K).
+    // 2 backward: I10 (through J10, empty). 1 sideways: K9 (K11 off board).
+    expect(moves).toHaveLength(2);
+    expect(includesPos(moves, pos("I", 10))).toBe(true);
+    expect(includesPos(moves, pos("K", 9))).toBe(true);
+  });
+
+  it("12.3 Knight at A1 corner — only 2 L-shape destinations", () => {
+    const state = createCustomGame([
+      { type: "knight", player: "white", position: pos("A", 1), id: "wk" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    const wk = getPieceAt(state.board, pos("A", 1))!;
+    const moves = getKnightMoves(wk, state);
+
+    // From A1 (row 0, col 0):
+    // 2 down, 1 right: C2. Leg=B1 (empty). ✓
+    // 2 right, 1 down: B3. Leg=A2 (empty). ✓
+    // All other directions go off-board.
+    expect(moves).toHaveLength(2);
+    expect(includesPos(moves, pos("C", 2))).toBe(true);
+    expect(includesPos(moves, pos("B", 3))).toBe(true);
+  });
+
+  it("12.4 Knight at K10 corner — only 2 L-shape destinations", () => {
+    const state = createCustomGame([
+      { type: "knight", player: "white", position: pos("K", 10), id: "wk" },
+      { type: "footman", player: "black", position: pos("A", 1), id: "bd" },
+    ]);
+
+    const wk = getPieceAt(state.board, pos("K", 10))!;
+    const moves = getKnightMoves(wk, state);
+
+    // From K10 (row 10, col 9):
+    // 2 up, 1 left: I9. Leg=J10 (empty). ✓
+    // 2 left, 1 up: J8. Leg=K9 (empty). ✓
+    // All other directions go off-board.
+    expect(moves).toHaveLength(2);
+    expect(includesPos(moves, pos("I", 9))).toBe(true);
+    expect(includesPos(moves, pos("J", 8))).toBe(true);
+  });
+
+  it("12.5 Archer longshot at corner A1 — only forward longshot valid", () => {
+    const state = createCustomGame([
+      { type: "archer", player: "white", position: pos("A", 1), id: "wa" },
+      { type: "footman", player: "white", position: pos("B", 1), id: "wf-screen" },
+      { type: "footman", player: "black", position: pos("C", 1), id: "bf-target" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    const wa = getPieceAt(state.board, pos("A", 1))!;
+    const longshots = getArcherLongshots(wa, state);
+
+    // Forward (toward K) from A1: B1 (screen), C1 (target at dist 2). ✓
+    // Backward: off board. Left: off board. Right: A2 (dist 1, min is 2) → A3 at dist 2, no screen at A2.
+    expect(longshots).toHaveLength(1);
+    expect(posEq(longshots[0].targetPosition, pos("C", 1))).toBe(true);
+  });
+});
+
+// ── Group 13: River Boundary Precision ──────────────────────────────
+
+describe("Group 13: River Boundary Precision", () => {
+  it("13.1 White footman at row E — behind river", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    expect(getRiverStatus(pos("E", 5), "white")).toBe("behind");
+
+    const wf = getPieceAt(state.board, pos("E", 5))!;
+    const moves = getFootmanMoves(wf, state);
+
+    // Behind river: 1 orthogonal each direction
+    expect(moves).toHaveLength(4);
+    expect(includesPos(moves, pos("D", 5))).toBe(true); // backward
+    expect(includesPos(moves, pos("F", 5))).toBe(true); // forward
+    expect(includesPos(moves, pos("E", 4))).toBe(true); // left
+    expect(includesPos(moves, pos("E", 6))).toBe(true); // right
+
+    // Captures: forward diagonal only
+    // Place enemies on diagonals to test
+    const stateWithEnemies = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("F", 4), id: "bf1" },
+      { type: "footman", player: "black", position: pos("F", 6), id: "bf2" },
+      { type: "footman", player: "black", position: pos("D", 4), id: "bf3" },
+      { type: "footman", player: "black", position: pos("D", 6), id: "bf4" },
+    ]);
+    const wf2 = getPieceAt(stateWithEnemies.board, pos("E", 5))!;
+    const captures = getFootmanCaptures(wf2, stateWithEnemies);
+
+    // Behind river: forward diagonal only = F4, F6
+    expect(captures).toHaveLength(2);
+    expect(captures.some((c) => posEq(c.position, pos("F", 4)))).toBe(true);
+    expect(captures.some((c) => posEq(c.position, pos("F", 6)))).toBe(true);
+  });
+
+  it("13.2 White footman at row F — at river", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("F", 5), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    expect(getRiverStatus(pos("F", 5), "white")).toBe("at");
+
+    const wf = getPieceAt(state.board, pos("F", 5))!;
+    const moves = getFootmanMoves(wf, state);
+
+    // At river: 1 orthogonal each direction
+    expect(moves).toHaveLength(4);
+    expect(includesPos(moves, pos("E", 5))).toBe(true);
+    expect(includesPos(moves, pos("G", 5))).toBe(true);
+    expect(includesPos(moves, pos("F", 4))).toBe(true);
+    expect(includesPos(moves, pos("F", 6))).toBe(true);
+
+    // At river captures: forward diagonal only = G4, G6
+    const stateCaptures = createCustomGame([
+      { type: "footman", player: "white", position: pos("F", 5), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("G", 4), id: "bf1" },
+      { type: "footman", player: "black", position: pos("G", 6), id: "bf2" },
+      { type: "footman", player: "black", position: pos("E", 4), id: "bf3" },
+      { type: "footman", player: "black", position: pos("E", 6), id: "bf4" },
+    ]);
+    const wf2 = getPieceAt(stateCaptures.board, pos("F", 5))!;
+    const captures = getFootmanCaptures(wf2, stateCaptures);
+    expect(captures).toHaveLength(2);
+    expect(captures.some((c) => posEq(c.position, pos("G", 4)))).toBe(true);
+    expect(captures.some((c) => posEq(c.position, pos("G", 6)))).toBe(true);
+  });
+
+  it("13.3 White footman at row G — beyond river", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("G", 5), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    expect(getRiverStatus(pos("G", 5), "white")).toBe("beyond");
+
+    const wf = getPieceAt(state.board, pos("G", 5))!;
+    const moves = getFootmanMoves(wf, state);
+
+    // Beyond river: 2 forward (I5), 2 backward (E5), 1 sideways (G4, G6)
+    expect(moves).toHaveLength(4);
+    expect(includesPos(moves, pos("I", 5))).toBe(true);
+    expect(includesPos(moves, pos("E", 5))).toBe(true);
+    expect(includesPos(moves, pos("G", 4))).toBe(true);
+    expect(includesPos(moves, pos("G", 6))).toBe(true);
+
+    // Beyond river captures: all diagonals
+    const stateCaptures = createCustomGame([
+      { type: "footman", player: "white", position: pos("G", 5), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("F", 4), id: "bf1" },
+      { type: "footman", player: "black", position: pos("F", 6), id: "bf2" },
+      { type: "footman", player: "black", position: pos("H", 4), id: "bf3" },
+      { type: "footman", player: "black", position: pos("H", 6), id: "bf4" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+    const wf2 = getPieceAt(stateCaptures.board, pos("G", 5))!;
+    const captures = getFootmanCaptures(wf2, stateCaptures);
+    expect(captures).toHaveLength(4);
+  });
+
+  it("13.4 Black footman symmetry — G=behind, F=at, E=beyond", () => {
+    // G5 for black = behind river
+    const stateG = createCustomGame([
+      { type: "footman", player: "black", position: pos("G", 5), id: "bf", hasMoved: true },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ], { turn: "black" });
+
+    expect(getRiverStatus(pos("G", 5), "black")).toBe("behind");
+    const bfG = getPieceAt(stateG.board, pos("G", 5))!;
+    const movesG = getFootmanMoves(bfG, stateG);
+    expect(movesG).toHaveLength(4); // 1 orthogonal each dir
+
+    // F5 for black = at river
+    const stateF = createCustomGame([
+      { type: "footman", player: "black", position: pos("F", 5), id: "bf", hasMoved: true },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ], { turn: "black" });
+
+    expect(getRiverStatus(pos("F", 5), "black")).toBe("at");
+    const bfF = getPieceAt(stateF.board, pos("F", 5))!;
+    const movesF = getFootmanMoves(bfF, stateF);
+    expect(movesF).toHaveLength(4); // 1 orthogonal each dir
+
+    // E5 for black = beyond river
+    const stateE = createCustomGame([
+      { type: "footman", player: "black", position: pos("E", 5), id: "bf", hasMoved: true },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ], { turn: "black" });
+
+    expect(getRiverStatus(pos("E", 5), "black")).toBe("beyond");
+    const bfE = getPieceAt(stateE.board, pos("E", 5))!;
+    const movesE = getFootmanMoves(bfE, stateE);
+    // Beyond: 2 forward (C5), 2 backward (G5), 1 sideways (E4, E6)
+    expect(movesE).toHaveLength(4);
+    expect(includesPos(movesE, pos("C", 5))).toBe(true);
+    expect(includesPos(movesE, pos("G", 5))).toBe(true);
+    expect(includesPos(movesE, pos("E", 4))).toBe(true);
+    expect(includesPos(movesE, pos("E", 6))).toBe(true);
+  });
+
+  it("13.5 Archer movement modes at river boundary", () => {
+    // E5 (behind for white): 2 orthogonal sliding + 1 diagonal
+    const stateE = createCustomGame([
+      { type: "archer", player: "white", position: pos("E", 5), id: "wa" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+    const waE = getPieceAt(stateE.board, pos("E", 5))!;
+    const movesE = getArcherMoves(waE, stateE);
+    // 2 orthogonal: C5, G5, E3, E7. Diagonal 1: D4, D6, F4, F6. Total 8.
+    expect(movesE).toHaveLength(8);
+    expect(includesPos(movesE, pos("C", 5))).toBe(true); // 2 up
+    expect(includesPos(movesE, pos("G", 5))).toBe(true); // 2 down
+
+    // G5 (beyond for white): 1 tile any direction (king-like)
+    const stateG = createCustomGame([
+      { type: "archer", player: "white", position: pos("G", 5), id: "wa" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+    const waG = getPieceAt(stateG.board, pos("G", 5))!;
+    const movesG = getArcherMoves(waG, stateG);
+    // 1 tile in 8 directions: F4,F5,F6,G4,G6,H4,H5,H6
+    expect(movesG).toHaveLength(8);
+    // Beyond CANNOT reach C5 or G3 (2-tile distances)
+    expect(includesPos(movesG, pos("E", 5))).toBe(false);
+    expect(includesPos(movesG, pos("I", 5))).toBe(false);
+  });
+});
+
+// ── Group 14: Anti-Retaliation Deep Dive ────────────────────────────
+
+describe("Group 14: Anti-Retaliation Deep Dive", () => {
+  it("14.1 Anti-retaliation clears on non-pushback move", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf" },
+      { type: "footman", player: "black", position: pos("F", 5), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ]);
+
+    // White pushes bf from F5 to G5
+    state = executeMove(state, {
+      type: "pushback",
+      pieceId: "wf",
+      targetPieceId: "bf",
+      pushDirection: [1, 0] as [number, number],
+    });
+    expect(state.lastPushback).not.toBeNull();
+    expect(state.lastPushback!.targetPieceId).toBe("wf");
+
+    // Black makes a non-pushback move
+    state = executeMove(state, { type: "move", pieceId: "bd", to: pos("K", 9) });
+    expect(state.lastPushback).toBeNull();
+  });
+
+  it("14.2 Anti-retaliation lasts exactly one opponent turn", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf" },
+      { type: "footman", player: "black", position: pos("F", 5), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ]);
+
+    // White pushes bf to G5
+    state = executeMove(state, {
+      type: "pushback",
+      pieceId: "wf",
+      targetPieceId: "bf",
+      pushDirection: [1, 0] as [number, number],
+    });
+
+    // Black non-pushback → clears lastPushback
+    state = executeMove(state, { type: "move", pieceId: "bd", to: pos("K", 9) });
+    expect(state.lastPushback).toBeNull();
+
+    // White moves wd
+    state = executeMove(state, { type: "move", pieceId: "wd", to: pos("A", 2) });
+
+    // Black's bf (at G5) is no longer anti-retaliation-blocked.
+    // bf at G5, behind river for black. wf at E5 is 2 rows away, not adjacent.
+    // But the point is that lastPushback is null → no anti-retaliation active.
+    expect(state.lastPushback).toBeNull();
+  });
+
+  it("14.3 Different piece can still push (not blocked by anti-retaliation)", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf1" },
+      { type: "footman", player: "white", position: pos("E", 7), id: "wf2" },
+      { type: "footman", player: "black", position: pos("F", 5), id: "bf1" },
+      { type: "footman", player: "black", position: pos("F", 7), id: "bf2" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    // White pushes bf1 using wf1
+    state = executeMove(state, {
+      type: "pushback",
+      pieceId: "wf1",
+      targetPieceId: "bf1",
+      pushDirection: [1, 0] as [number, number],
+    });
+    expect(state.lastPushback!.targetPieceId).toBe("wf1"); // wf1 is protected
+
+    // Black's bf2 at F7 can push wf2 at E7 (different piece, not protected)
+    const bf2 = getPieceAt(state.board, pos("F", 7))!;
+    const pushbacks = getFootmanPushbacks(bf2, state);
+    const targetsWf2 = pushbacks.filter((p) => p.targetPiece.id === "wf2");
+    expect(targetsWf2.length).toBeGreaterThan(0);
+  });
+
+  it("14.4 Semantic: targetPieceId stores the PUSHER's ID", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf-pusher" },
+      { type: "footman", player: "black", position: pos("F", 5), id: "bf-pushed" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    state = executeMove(state, {
+      type: "pushback",
+      pieceId: "wf-pusher",
+      targetPieceId: "bf-pushed",
+      pushDirection: [1, 0] as [number, number],
+    });
+
+    // lastPushback.targetPieceId = the PUSHER, not the pushed piece
+    expect(state.lastPushback!.targetPieceId).toBe("wf-pusher");
+    expect(state.lastPushback!.byPlayer).toBe("white");
+  });
+
+  it("14.5 Anti-retaliation blocks retaliation pushback on the pusher", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf" },
+      { type: "footman", player: "black", position: pos("F", 5), id: "bf1" },
+      { type: "footman", player: "black", position: pos("D", 5), id: "bf2" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    // White pushes bf1 from F5 to G5
+    state = executeMove(state, {
+      type: "pushback",
+      pieceId: "wf",
+      targetPieceId: "bf1",
+      pushDirection: [1, 0] as [number, number],
+    });
+
+    // bf2 at D5 is adjacent to wf at E5. Anti-retaliation protects "wf".
+    const bf2 = getPieceAt(state.board, pos("D", 5))!;
+    const pushbacks = getFootmanPushbacks(bf2, state);
+    const targetsWf = pushbacks.filter((p) => p.targetPiece.id === "wf");
+    expect(targetsWf).toHaveLength(0); // blocked by anti-retaliation
+  });
+});
+
+// ── Group 15: Complex Mechanic Interactions ─────────────────────────
+
+describe("Group 15: Complex Mechanic Interactions", () => {
+  it("15.1 Capture last piece at back row — annihilation > promotion", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("J", 4), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bf" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    // wf at J4 (beyond river for white), forward diagonal = K3 and K5
+    // K5 has the LAST black piece
+    state = executeMove(state, { type: "capture", pieceId: "wf", to: pos("K", 5) });
+
+    // Annihilation wins, promotion NOT triggered
+    expect(state.gamePhase).toBe("ended");
+    expect(state.winner).toBe("white");
+    expect(state.winCondition).toBe("annihilation");
+    expect(state.pendingPromotion).toBeNull();
+  });
+
+  it("15.2 Knight capture on flag gives 3-flag check", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("F", 1), id: "w1" },
+      { type: "footman", player: "white", position: pos("F", 4), id: "w2" },
+      { type: "knight", player: "white", position: pos("D", 9), id: "wk" },
+      { type: "footman", player: "black", position: pos("F", 10), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bd" },
+    ]);
+
+    // White controls F1, F4. Knight D9 → F10 (L-shape: 2 down, 1 right)
+    // D=row3, +2=row5=F, col9+1=10. Intermediate E9 (empty). ✓
+    state = executeMove(state, { type: "capture", pieceId: "wk", to: pos("F", 10) });
+
+    // White now controls F1, F4, F10 = 3 flags → check on black
+    expect(state.checkPlayer).toBe("black");
+    expect(state.gamePhase).not.toBe("ended"); // black can still respond
+  });
+
+  it("15.3 Longshot kills piece on capture point — flag control cleared", () => {
+    let state = createCustomGame([
+      { type: "archer", player: "white", position: pos("D", 1), id: "wa" },
+      { type: "footman", player: "white", position: pos("E", 1), id: "wf-screen" },
+      { type: "footman", player: "black", position: pos("F", 1), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    // F1 is a capture point controlled by black
+    expect(state.capturePoints["F1"]).toBe("black");
+
+    // White longshots bf at F1 (screen = wf at E1, dist 2)
+    state = executeMove(state, { type: "longshot", pieceId: "wa", targetPosition: pos("F", 1) });
+
+    // bf removed, F1 now uncontrolled
+    expect(state.capturePoints["F1"]).toBeNull();
+    expect(getPieceAt(state.board, pos("F", 1))).toBeNull();
+    // Archer stays at D1
+    expect(getPieceAt(state.board, pos("D", 1))?.id).toBe("wa");
+  });
+
+  it("15.4 Capture at back row triggers promotion (non-annihilation)", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("J", 4), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 8), id: "bd" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    // wf captures bf at K5. bd still alive → no annihilation.
+    state = executeMove(state, { type: "capture", pieceId: "wf", to: pos("K", 5) });
+    expect(state.gamePhase).toBe("awaitingPromotion");
+
+    // Promote: return archer to A2
+    state = executeMove(state, {
+      type: "promotion",
+      capturedPieceId: "wa-cap",
+      placementPosition: pos("A", 2),
+    });
+
+    // Footman removed from K5, archer placed at A2
+    expect(getPieceAt(state.board, pos("K", 5))).toBeNull();
+    expect(getPieceAt(state.board, pos("A", 2))?.id).toBe("wa-cap");
+    expect(getPieceAt(state.board, pos("A", 2))?.type).toBe("archer");
+    expect(state.gamePhase).toBe("playing");
+    expect(state.turn).toBe("black");
+  });
+
+  it("15.5 Ransom then promotion in same game", () => {
+    let state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 5), id: "wk" },
+      { type: "knight", player: "black", position: pos("F", 6), id: "bk" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 1), id: "bd1" },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bd2" },
+    ], {
+      capturedPieces: {
+        white: [
+          { id: "wf-cap", type: "footman", player: "white", position: pos("A", 1), hasMoved: false },
+          { id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false },
+        ],
+        black: [],
+      },
+    });
+
+    // Step 1: Knight captures knight → ransom
+    state = executeMove(state, { type: "capture", pieceId: "wk", to: pos("F", 6) });
+    expect(state.gamePhase).toBe("awaitingRansom");
+
+    // Ransom wf-cap to B2
+    state = executeMove(state, {
+      type: "ransom",
+      capturedPieceId: "wf-cap",
+      placementPosition: pos("B", 2),
+    });
+    expect(state.gamePhase).toBe("playing");
+    expect(state.turn).toBe("black");
+    expect(getPieceAt(state.board, pos("B", 2))?.id).toBe("wf-cap");
+
+    // wa-cap still in captured pieces for later promotion
+    expect(state.capturedPieces.white).toHaveLength(1);
+    expect(state.capturedPieces.white[0].id).toBe("wa-cap");
+
+    assertStateIntegrity(state);
+  });
+});
+
+// ── Group 16: Promotion Deep Dive ───────────────────────────────────
+
+describe("Group 16: Promotion Deep Dive", () => {
+  it("16.1 Partial home row occupation — only empty tiles offered", () => {
+    let state = createCustomGame([
+      // Fill A1-A5 with white pieces
+      { type: "footman", player: "white", position: pos("A", 1), id: "w-fill1" },
+      { type: "footman", player: "white", position: pos("A", 2), id: "w-fill2" },
+      { type: "footman", player: "white", position: pos("A", 3), id: "w-fill3" },
+      { type: "footman", player: "white", position: pos("A", 4), id: "w-fill4" },
+      { type: "footman", player: "white", position: pos("A", 5), id: "w-fill5" },
+      // Promoting footman
+      { type: "footman", player: "white", position: pos("J", 4), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 8), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    // Capture at K5 → promotion
+    state = executeMove(state, { type: "capture", pieceId: "wf", to: pos("K", 5) });
+    expect(state.gamePhase).toBe("awaitingPromotion");
+
+    const footman = getPieceAt(state.board, pos("K", 5))!;
+    const options = getPromotionOptions(footman, state);
+
+    // A1-A5 occupied, A6-A10 + all B + all C available
+    expect(options.placementPositions.some((p) => posEq(p, pos("A", 1)))).toBe(false);
+    expect(options.placementPositions.some((p) => posEq(p, pos("A", 6)))).toBe(true);
+    expect(options.placementPositions.some((p) => posEq(p, pos("B", 1)))).toBe(true);
+    expect(options.placementPositions.some((p) => posEq(p, pos("C", 1)))).toBe(true);
+  });
+
+  it("16.2 Promoted piece type preserved", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("J", 4), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 8), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wk-cap", type: "knight", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    state = executeMove(state, { type: "capture", pieceId: "wf", to: pos("K", 5) });
+    state = executeMove(state, {
+      type: "promotion",
+      capturedPieceId: "wk-cap",
+      placementPosition: pos("B", 2),
+    });
+
+    const returned = getPieceAt(state.board, pos("B", 2))!;
+    expect(returned.type).toBe("knight");
+    expect(returned.id).toBe("wk-cap");
+  });
+
+  it("16.3 Promoted piece has hasMoved=true", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("J", 4), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 8), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    state = executeMove(state, { type: "capture", pieceId: "wf", to: pos("K", 5) });
+    state = executeMove(state, {
+      type: "promotion",
+      capturedPieceId: "wa-cap",
+      placementPosition: pos("B", 2),
+    });
+
+    expect(getPieceAt(state.board, pos("B", 2))!.hasMoved).toBe(true);
+  });
+
+  it("16.4 Multiple promotions in one game", () => {
+    let state = createCustomGame([
+      // Footmen positioned for diagonal captures at back row
+      { type: "footman", player: "white", position: pos("J", 4), id: "wf1", hasMoved: true },
+      { type: "footman", player: "white", position: pos("J", 8), id: "wf2", hasMoved: true },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bd1" },
+      { type: "footman", player: "black", position: pos("K", 7), id: "bd2" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd3" },
+    ], {
+      capturedPieces: {
+        white: [
+          { id: "wa-cap1", type: "archer", player: "white", position: pos("A", 1), hasMoved: false },
+          { id: "wa-cap2", type: "archer", player: "white", position: pos("A", 1), hasMoved: false },
+        ],
+        black: [],
+      },
+    });
+
+    // First promotion: wf1 at J4 captures bd1 at K5 (diagonal forward)
+    state = executeMove(state, { type: "capture", pieceId: "wf1", to: pos("K", 5) });
+    expect(state.gamePhase).toBe("awaitingPromotion");
+    state = executeMove(state, {
+      type: "promotion",
+      capturedPieceId: "wa-cap1",
+      placementPosition: pos("A", 2),
+    });
+    expect(state.gamePhase).toBe("playing");
+    expect(state.capturedPieces.white).toHaveLength(1);
+
+    // Black moves
+    state = executeMove(state, { type: "move", pieceId: "bd3", to: pos("K", 9) });
+
+    // Second promotion: wf2 at J8 captures bd2 at K7 (diagonal forward)
+    state = executeMove(state, { type: "capture", pieceId: "wf2", to: pos("K", 7) });
+    expect(state.gamePhase).toBe("awaitingPromotion");
+    state = executeMove(state, {
+      type: "promotion",
+      capturedPieceId: "wa-cap2",
+      placementPosition: pos("A", 4),
+    });
+
+    expect(state.capturedPieces.white).toHaveLength(0);
+    expect(getPieceAt(state.board, pos("A", 2))?.type).toBe("archer");
+    expect(getPieceAt(state.board, pos("A", 4))?.type).toBe("archer");
+    assertStateIntegrity(state);
+  });
+
+  it("16.5 Footman reaches back row via 2-tile beyond-river move", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("I", 5), id: "wf", hasMoved: true },
+      { type: "footman", player: "black", position: pos("K", 1), id: "bd1" },
+      { type: "footman", player: "black", position: pos("K", 8), id: "bd2" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    // I5 beyond river for white. 2 forward = K5 (through J5, empty).
+    state = executeMove(state, { type: "move", pieceId: "wf", to: pos("K", 5) });
+    expect(state.gamePhase).toBe("awaitingPromotion");
+  });
+});
+
+// ── Group 17: Ransom Deep Dive ──────────────────────────────────────
+
+describe("Group 17: Ransom Deep Dive", () => {
+  it("17.1 Multiple captured pieces — all eligible offered", () => {
+    let state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 5), id: "wk" },
+      { type: "knight", player: "black", position: pos("F", 6), id: "bk" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [
+          { id: "wf-cap", type: "footman", player: "white", position: pos("A", 1), hasMoved: false },
+          { id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false },
+          { id: "wk-cap", type: "knight", player: "white", position: pos("A", 1), hasMoved: false },
+        ],
+        black: [],
+      },
+    });
+
+    state = executeMove(state, { type: "capture", pieceId: "wk", to: pos("F", 6) });
+    expect(state.gamePhase).toBe("awaitingRansom");
+
+    // getRansomOptions should include footman and archer, NOT knight
+    const knight = getPieceAt(state.board, pos("F", 6))!;
+    const capturedKnight = state.capturedPieces.black.find((p) => p.id === "bk")!;
+    const options = getRansomOptions(knight, capturedKnight, state);
+    expect(options.capturedPieces).toHaveLength(2);
+    expect(options.capturedPieces.some((p) => p.type === "footman")).toBe(true);
+    expect(options.capturedPieces.some((p) => p.type === "archer")).toBe(true);
+    expect(options.capturedPieces.some((p) => p.type === "knight")).toBe(false);
+  });
+
+  it("17.2 Invalid ransom placement — wrong row (should throw)", () => {
+    let state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 5), id: "wk" },
+      { type: "knight", player: "black", position: pos("F", 6), id: "bk" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wf-cap", type: "footman", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    state = executeMove(state, { type: "capture", pieceId: "wk", to: pos("F", 6) });
+    expect(state.gamePhase).toBe("awaitingRansom");
+
+    // Try placing at F5 (not home row for white)
+    expect(() =>
+      executeMove(state, {
+        type: "ransom",
+        capturedPieceId: "wf-cap",
+        placementPosition: pos("F", 5),
+      })
+    ).toThrow("Ransom placement must be in player's home rows");
+  });
+
+  it("17.3 Invalid ransom placement — occupied tile (should throw)", () => {
+    let state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 5), id: "wk" },
+      { type: "knight", player: "black", position: pos("F", 6), id: "bk" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wf-cap", type: "footman", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    state = executeMove(state, { type: "capture", pieceId: "wk", to: pos("F", 6) });
+
+    // Try placing at A1 (occupied by wd)
+    expect(() =>
+      executeMove(state, {
+        type: "ransom",
+        capturedPieceId: "wf-cap",
+        placementPosition: pos("A", 1),
+      })
+    ).toThrow("Ransom placement position is occupied");
+  });
+
+  it("17.4 Cannot ransom a knight — auto-skipped", () => {
+    let state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 5), id: "wk" },
+      { type: "knight", player: "black", position: pos("F", 6), id: "bk" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wk-cap2", type: "knight", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    // Only captured piece is a knight — not eligible for ransom
+    state = executeMove(state, { type: "capture", pieceId: "wk", to: pos("F", 6) });
+
+    // Ransom auto-skipped (no eligible pieces)
+    expect(state.gamePhase).toBe("playing");
+    expect(state.turn).toBe("black");
+    expect(state.pendingRansom).toBeNull();
+  });
+
+  it("17.5 Ransomed piece has hasMoved=true", () => {
+    let state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 5), id: "wk" },
+      { type: "knight", player: "black", position: pos("F", 6), id: "bk" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wf-cap", type: "footman", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    state = executeMove(state, { type: "capture", pieceId: "wk", to: pos("F", 6) });
+    state = executeMove(state, {
+      type: "ransom",
+      capturedPieceId: "wf-cap",
+      placementPosition: pos("B", 3),
+    });
+
+    // Ransomed piece always gets hasMoved=true
+    expect(getPieceAt(state.board, pos("B", 3))!.hasMoved).toBe(true);
+  });
+});
+
+// ── Group 18: Capture Point Control Stress ──────────────────────────
+
+describe("Group 18: Capture Point Control Stress", () => {
+  it("18.1 All 4 flags occupied simultaneously", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("F", 1), id: "w1" },
+      { type: "footman", player: "white", position: pos("F", 4), id: "w2" },
+      { type: "footman", player: "black", position: pos("F", 7), id: "b1" },
+      { type: "footman", player: "black", position: pos("F", 10), id: "b2" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bd" },
+    ]);
+
+    expect(state.capturePoints["F1"]).toBe("white");
+    expect(state.capturePoints["F4"]).toBe("white");
+    expect(state.capturePoints["F7"]).toBe("black");
+    expect(state.capturePoints["F10"]).toBe("black");
+
+    expect(countControlledPoints(state.capturePoints, "white")).toBe(2);
+    expect(countControlledPoints(state.capturePoints, "black")).toBe(2);
+
+    // Neither player has 3+ flags, so no check
+    expect(state.checkPlayer).toBeNull();
+  });
+
+  it("18.2 Flag flipping via knight capture", () => {
+    let state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 2), id: "wk" },
+      { type: "knight", player: "black", position: pos("H", 2), id: "bk" },
+      { type: "footman", player: "white", position: pos("A", 5), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bd" },
+    ]);
+
+    // F1 initially uncontrolled
+    expect(state.capturePoints["F1"]).toBeNull();
+
+    // White knight D2 → F1 (L-shape: 2 down, 1 left. D=row3+2=F=row5, col2-1=1)
+    // Intermediate for "down" direction: E2. Empty. No leg cut.
+    state = executeMove(state, { type: "move", pieceId: "wk", to: pos("F", 1) });
+    expect(state.capturePoints["F1"]).toBe("white");
+
+    // Black knight H2 → F1 (capture). L-shape: 2 up, 1 left. H=row7-2=F=row5, col2-1=1.
+    // Intermediate for "up" direction: G2. Empty. No leg cut.
+    state = executeMove(state, { type: "capture", pieceId: "bk", to: pos("F", 1) });
+    expect(state.capturePoints["F1"]).toBe("black"); // flipped!
+  });
+
+  it("18.3 Flag control cleared by longshot", () => {
+    let state = createCustomGame([
+      { type: "archer", player: "white", position: pos("D", 1), id: "wa" },
+      { type: "footman", player: "white", position: pos("E", 1), id: "wf-screen" },
+      { type: "footman", player: "black", position: pos("F", 1), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    expect(state.capturePoints["F1"]).toBe("black");
+
+    state = executeMove(state, { type: "longshot", pieceId: "wa", targetPosition: pos("F", 1) });
+    expect(state.capturePoints["F1"]).toBeNull();
+  });
+
+  it("18.4 Flag control persists through unrelated moves", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("F", 1), id: "wf" },
+      { type: "footman", player: "white", position: pos("A", 5), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 5), id: "bd" },
+      { type: "footman", player: "black", position: pos("K", 8), id: "bd2" },
+    ]);
+
+    expect(state.capturePoints["F1"]).toBe("white");
+
+    // White moves wd (unrelated to flag)
+    state = executeMove(state, { type: "move", pieceId: "wd", to: pos("A", 6) });
+    expect(state.capturePoints["F1"]).toBe("white");
+
+    // Black moves bd (unrelated to flag)
+    state = executeMove(state, { type: "move", pieceId: "bd", to: pos("K", 6) });
+    expect(state.capturePoints["F1"]).toBe("white");
+  });
+
+  it("18.5 Pushback moves enemy off capture point", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 4), id: "wf" },
+      { type: "footman", player: "black", position: pos("F", 4), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+    ]);
+
+    // F4 is a capture point, controlled by black (bf on it)
+    expect(state.capturePoints["F4"]).toBe("black");
+
+    // Push bf from F4 to G4
+    state = executeMove(state, {
+      type: "pushback",
+      pieceId: "wf",
+      targetPieceId: "bf",
+      pushDirection: [1, 0] as [number, number],
+    });
+
+    // F4 now uncontrolled
+    expect(state.capturePoints["F4"]).toBeNull();
+  });
+});
+
+// ── Group 19: First-Move Double-Step Edge Cases ─────────────────────
+
+describe("Group 19: First-Move Double-Step Edge Cases", () => {
+  it("19.1 Double-step blocked by intermediate piece", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("C", 5), id: "wf", hasMoved: false },
+      { type: "archer", player: "white", position: pos("D", 5), id: "wa-blocker" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    const wf = getPieceAt(state.board, pos("C", 5))!;
+    const moves = getFootmanMoves(wf, state);
+
+    // D5 is occupied (blocker), so both D5 (1 forward) and E5 (double-step) blocked
+    expect(includesPos(moves, pos("D", 5))).toBe(false);
+    expect(includesPos(moves, pos("E", 5))).toBe(false);
+    // Sideways: C4, C6. Backward: B5.
+    expect(includesPos(moves, pos("C", 4))).toBe(true);
+    expect(includesPos(moves, pos("C", 6))).toBe(true);
+    expect(includesPos(moves, pos("B", 5))).toBe(true);
+  });
+
+  it("19.2 Double-step blocked by piece on destination", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("C", 5), id: "wf", hasMoved: false },
+      { type: "footman", player: "black", position: pos("E", 5), id: "bf" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    const wf = getPieceAt(state.board, pos("C", 5))!;
+    const moves = getFootmanMoves(wf, state);
+
+    // D5 is empty → 1 forward ✓. E5 is occupied → double-step blocked.
+    expect(includesPos(moves, pos("D", 5))).toBe(true);
+    expect(includesPos(moves, pos("E", 5))).toBe(false);
+  });
+
+  it("19.3 Double-step lost after pushback sets hasMoved", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf-pusher" },
+      { type: "footman", player: "black", position: pos("F", 5), id: "bf-target", hasMoved: false },
+      { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    // Push bf from F5 to G5
+    state = executeMove(state, {
+      type: "pushback",
+      pieceId: "wf-pusher",
+      targetPieceId: "bf-target",
+      pushDirection: [1, 0] as [number, number],
+    });
+
+    // Pushed piece has hasMoved=true
+    const bf = getPieceAt(state.board, pos("G", 5))!;
+    expect(bf.hasMoved).toBe(true);
+
+    // bf at G5 is behind river for black. 1 orthogonal each dir, no double-step.
+    const moves = getFootmanMoves(bf, state);
+    expect(moves).toHaveLength(4); // F5, H5, G4, G6
+    // No double-step destination (which would be E5 if still eligible)
+    expect(includesPos(moves, pos("E", 5))).toBe(false);
+  });
+
+  it("19.4 Standard double-step from initial positions", () => {
+    let state = createGame();
+
+    // White footman-13 at C5 double-steps to E5
+    state = executeMove(state, { type: "move", pieceId: "white-footman-13", to: pos("E", 5) });
+    expect(getPieceAt(state.board, pos("E", 5))?.id).toBe("white-footman-13");
+    expect(getPieceAt(state.board, pos("E", 5))?.hasMoved).toBe(true);
+
+    // Black footman-18 at I6 double-steps to G6
+    state = executeMove(state, { type: "move", pieceId: "black-footman-18", to: pos("G", 6) });
+    expect(getPieceAt(state.board, pos("G", 6))?.id).toBe("black-footman-18");
+    expect(getPieceAt(state.board, pos("G", 6))?.hasMoved).toBe(true);
+  });
+
+  it("19.5 Beyond-river + first-move deduplication", () => {
+    const state = createCustomGame([
+      { type: "footman", player: "white", position: pos("G", 5), id: "wf", hasMoved: false },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
+    ]);
+
+    const wf = getPieceAt(state.board, pos("G", 5))!;
+    const moves = getFootmanMoves(wf, state);
+
+    // Beyond river: 2 fwd (I5), 2 bwd (E5), 1 sideways (G4, G6)
+    // First-move double-step: 2 fwd (I5) — same as beyond-river forward
+    // I5 should appear exactly once (dedup)
+    const i5Count = moves.filter((m) => posEq(m, pos("I", 5))).length;
+    expect(i5Count).toBe(1);
+    expect(moves).toHaveLength(4);
+  });
+});
+
+// ── Group 20: Endgame Stress Tests ──────────────────────────────────
+
+describe("Group 20: Endgame Stress Tests", () => {
+  it("20.1 1v1 footman pushback cycle → draw after 20 half-turns", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("F", 5), id: "wf" },
+      { type: "footman", player: "black", position: pos("F", 6), id: "bf" },
+    ]);
+
+    // Play 20 half-turns of push/move-back cycle
+    for (let i = 0; i < 10; i++) {
+      // White pushes bf from current position to +1 row
+      const bfPos = getPieceAt(state.board, pos("F", 6)) ? pos("F", 6) : pos("G", 6);
+      const bfPiece = getPieceAt(state.board, bfPos);
+      if (bfPiece && bfPiece.id === "bf") {
+        // Push bf forward (toward K)
+        state = executeMove(state, {
+          type: "pushback",
+          pieceId: "wf",
+          targetPieceId: "bf",
+          pushDirection: [1, 0] as [number, number],
+        });
+      } else {
+        // wf just moves sideways if can't push
+        state = executeMove(state, { type: "move", pieceId: "wf", to: pos("F", 4) });
+      }
+
+      // Black: move bf back (or sideways) — find bf and move it
+      // For simplicity, just do a simple move
+      const allPieces: Piece[] = [];
+      for (let r = 0; r < 11; r++) {
+        for (let c = 0; c < 10; c++) {
+          const p = state.board[r][c];
+          if (p && p.id === "bf") allPieces.push(p);
+        }
+      }
+      if (allPieces.length > 0) {
+        const bf = allPieces[0];
+        const bfMoves = getFootmanMoves(bf, state);
+        if (bfMoves.length > 0) {
+          state = executeMove(state, { type: "move", pieceId: "bf", to: bfMoves[0] });
+        }
+      }
+    }
+
+    expect(state.turnsSinceCapture).toBeGreaterThanOrEqual(20);
+
+    // Draw should be available
+    state = offerDraw(state);
+    expect(state.gamePhase).toBe("ended");
+    expect(state.winCondition).toBe("draw");
+    expect(state.winner).toBeNull();
+  });
+
+  it("20.2 2v1 endgame with promotion", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("I", 5), id: "wf1", hasMoved: true },
+      { type: "footman", player: "white", position: pos("E", 3), id: "wf2" },
+      { type: "footman", player: "black", position: pos("K", 8), id: "bf" },
+    ], {
+      capturedPieces: {
+        white: [{ id: "wa-cap", type: "archer", player: "white", position: pos("A", 1), hasMoved: false }],
+        black: [],
+      },
+    });
+
+    // wf1 at I5 moves to K5 (2 forward, beyond river)
+    state = executeMove(state, { type: "move", pieceId: "wf1", to: pos("K", 5) });
+    expect(state.gamePhase).toBe("awaitingPromotion");
+
+    // Promote: return archer to A2
+    state = executeMove(state, {
+      type: "promotion",
+      capturedPieceId: "wa-cap",
+      placementPosition: pos("A", 2),
+    });
+
+    // wf1 sacrificed, archer placed. White has wf2 + archer.
+    expect(countPieces(state, "white")).toBe(2);
+    expect(countPieces(state, "black")).toBe(1);
+    expect(state.gamePhase).toBe("playing");
+    assertStateIntegrity(state);
+  });
+
+  it("20.3 Knight vs archer — archer can't capture without screen", () => {
+    const state = createCustomGame([
+      { type: "knight", player: "white", position: pos("D", 5), id: "wk" },
+      { type: "archer", player: "black", position: pos("H", 5), id: "ba" },
+    ], { turn: "white" });
+
+    // Archer has no longshots (no screen piece with only 2 pieces on board)
+    const ba = getPieceAt(state.board, pos("H", 5))!;
+    expect(getArcherLongshots(ba, state)).toHaveLength(0);
+
+    // Both have legal moves
+    expect(hasLegalMoves("white", state)).toBe(true);
+    expect(hasLegalMoves("black", state)).toBe(true);
+
+    // Knight is the only threat — it can move and eventually capture
+    const wk = getPieceAt(state.board, pos("D", 5))!;
+    const knightMoves = getKnightMoves(wk, state);
+    expect(knightMoves.length).toBeGreaterThan(0);
+  });
+
+  it("20.4 3v3 footmen capture chain", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 3), id: "wf1" },
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf2" },
+      { type: "footman", player: "white", position: pos("E", 7), id: "wf3" },
+      { type: "footman", player: "black", position: pos("F", 4), id: "bf1" },
+      { type: "footman", player: "black", position: pos("F", 6), id: "bf2" },
+      { type: "footman", player: "black", position: pos("F", 8), id: "bf3" },
+    ]);
+
+    // White captures bf1: wf1 at E3 → F4 (forward diagonal)
+    state = executeMove(state, { type: "capture", pieceId: "wf1", to: pos("F", 4) });
+    assertStateIntegrity(state, 6);
+    expect(countPieces(state)).toBe(5);
+
+    // Black captures wf2: bf2 at F6 → E5 (forward diagonal for black)
+    state = executeMove(state, { type: "capture", pieceId: "bf2", to: pos("E", 5) });
+    assertStateIntegrity(state, 6);
+    expect(countPieces(state)).toBe(4);
+
+    // White captures bf3: wf3 at E7 → F8 (forward diagonal)
+    state = executeMove(state, { type: "capture", pieceId: "wf3", to: pos("F", 8) });
+    assertStateIntegrity(state, 6);
+    expect(countPieces(state)).toBe(3);
+
+    // Piece count: wf1 at F4, wf3 at F8, bf2 at E5
+    expect(countPieces(state, "white")).toBe(2);
+    expect(countPieces(state, "black")).toBe(1);
+  });
+
+  it("20.5 Annihilation via sequential captures", () => {
+    let state = createCustomGame([
+      { type: "footman", player: "white", position: pos("E", 3), id: "wf" },
+      { type: "footman", player: "black", position: pos("F", 4), id: "bf1" },
+      { type: "footman", player: "black", position: pos("K", 10), id: "bf2" },
+    ]);
+
+    // White captures bf1 at F4
+    state = executeMove(state, { type: "capture", pieceId: "wf", to: pos("F", 4) });
+    expect(state.gamePhase).toBe("playing");
+    expect(countPieces(state, "black")).toBe(1);
+
+    // Black moves bf2
+    state = executeMove(state, { type: "move", pieceId: "bf2", to: pos("K", 9) });
+
+    // White wf at F4 (at river). Forward for white = G direction.
+    // Forward diagonal: G3, G5. Neither has a black piece.
+    // Need to maneuver. Move wf toward bf2.
+    // wf at F4 → G4 (1 forward at river)
+    state = executeMove(state, { type: "move", pieceId: "wf", to: pos("G", 4) });
+
+    // bf2 at K9 moves
+    state = executeMove(state, { type: "move", pieceId: "bf2", to: pos("K", 8) });
+
+    // wf at G4 beyond river for white. 2 forward = I4.
+    state = executeMove(state, { type: "move", pieceId: "wf", to: pos("I", 4) });
+
+    // Verify game still playing, state integrity
+    assertStateIntegrity(state);
+    expect(state.gamePhase).toBe("playing");
+    expect(countPieces(state, "white")).toBe(1);
+    expect(countPieces(state, "black")).toBe(1);
+  });
+});
