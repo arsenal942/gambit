@@ -32,6 +32,7 @@ export function addPlayerToRoom(
   room: GameRoom,
   socketId: string,
   preferredColor?: Player,
+  userId?: string | null,
 ): { color: Player; playerToken: string } {
   let color: Player;
 
@@ -53,6 +54,7 @@ export function addPlayerToRoom(
     color,
     connected: true,
     disconnectedAt: null,
+    userId: userId ?? null,
   };
 
   room.players[color] = playerInfo;

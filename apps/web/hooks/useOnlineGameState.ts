@@ -22,6 +22,7 @@ import {
   setPlayerToken,
   setPlayerColor,
 } from "@/lib/player-token";
+import { createClient } from "@/lib/supabase/client";
 
 export type ConnectionStatus =
   | "connecting"
@@ -61,6 +62,7 @@ export interface OnlineGameState {
   opponentDisconnectGraceMs: number | null;
   drawOffer: DrawOfferState;
   isMyTurn: boolean;
+  opponentUsername: string | null;
 
   // Actions
   createGame: (preferredColor?: Player) => void;
@@ -89,15 +91,20 @@ export function useOnlineGameState(): OnlineGameState {
     offeredBy: null,
     isOurs: false,
   });
+  const [opponentUsername, setOpponentUsername] = useState<string | null>(null);
 
   const socketRef = useRef<GameSocket | null>(null);
   const playerTokenRef = useRef<string | null>(null);
   const gameIdRef = useRef<string | null>(null);
+  const playerColorRef = useRef<Player | null>(null);
 
   // Keep refs in sync with state
   useEffect(() => {
     gameIdRef.current = gameId;
   }, [gameId]);
+  useEffect(() => {
+    playerColorRef.current = playerColor;
+  }, [playerColor]);
 
   const legalMoves: PieceActions[] = useMemo(() => {
     if (!gameState || !playerColor) return [];
@@ -178,6 +185,13 @@ export function useOnlineGameState(): OnlineGameState {
     socket.on("game_started", (payload) => {
       setGameState(payload.gameState);
       setOnlinePhase("playing");
+      // Determine opponent username from the game_started event
+      const myColor = playerColorRef.current;
+      if (myColor === "white") {
+        setOpponentUsername(payload.blackUsername ?? null);
+      } else if (myColor === "black") {
+        setOpponentUsername(payload.whiteUsername ?? null);
+      }
     });
 
     socket.on("game_updated", (payload: GameUpdatedPayload) => {
@@ -235,12 +249,25 @@ export function useOnlineGameState(): OnlineGameState {
   }, []);
 
   // Create game
-  const createGame = useCallback((preferredColor?: Player) => {
+  const createGame = useCallback(async (preferredColor?: Player) => {
     const socket = socketRef.current;
     if (!socket) return;
 
     setOnlinePhase("creating");
-    socket.emit("create_game", { preferredColor }, (response) => {
+
+    // Get Supabase token if authenticated
+    let supabaseToken: string | undefined;
+    try {
+      const supabase = createClient();
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        supabaseToken = session?.access_token ?? undefined;
+      }
+    } catch {
+      // Not authenticated — continue without token
+    }
+
+    socket.emit("create_game", { preferredColor, supabaseToken }, (response) => {
       if (
         response.success &&
         response.gameId &&
@@ -250,6 +277,7 @@ export function useOnlineGameState(): OnlineGameState {
         setGameId(response.gameId);
         gameIdRef.current = response.gameId;
         setPlayerColorState(response.color);
+        playerColorRef.current = response.color;
         playerTokenRef.current = response.playerToken;
         setPlayerToken(response.gameId, response.playerToken);
         setPlayerColor(response.gameId, response.color);
@@ -262,29 +290,46 @@ export function useOnlineGameState(): OnlineGameState {
   }, []);
 
   // Join game
-  const joinGame = useCallback((targetGameId: string) => {
+  const joinGame = useCallback(async (targetGameId: string) => {
     const socket = socketRef.current;
     if (!socket) return;
 
     setOnlinePhase("joining");
     const existingToken = getPlayerToken(targetGameId);
 
+    // Get Supabase token if authenticated
+    let supabaseToken: string | undefined;
+    try {
+      const supabase = createClient();
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        supabaseToken = session?.access_token ?? undefined;
+      }
+    } catch {
+      // Not authenticated — continue without token
+    }
+
     socket.emit(
       "join_game",
       {
         gameId: targetGameId,
         playerToken: existingToken ?? undefined,
+        supabaseToken,
       },
       (response) => {
         if (response.success && response.color && response.playerToken) {
           setGameId(targetGameId);
           gameIdRef.current = targetGameId;
           setPlayerColorState(response.color);
+          playerColorRef.current = response.color;
           playerTokenRef.current = response.playerToken;
           setPlayerToken(targetGameId, response.playerToken);
           setPlayerColor(targetGameId, response.color);
           if (response.gameState) {
             setGameState(response.gameState);
+          }
+          if (response.opponentUsername) {
+            setOpponentUsername(response.opponentUsername);
           }
           if (response.roomStatus === "waiting") {
             setOnlinePhase("waiting");
@@ -353,6 +398,7 @@ export function useOnlineGameState(): OnlineGameState {
     opponentDisconnectGraceMs,
     drawOffer,
     isMyTurn,
+    opponentUsername,
     createGame,
     joinGame,
     forfeitGame,

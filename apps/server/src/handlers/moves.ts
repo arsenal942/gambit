@@ -7,6 +7,7 @@ import type {
 import { executeMove, isGameOver } from "@gambit/engine";
 import { getRoom } from "../rooms.js";
 import { authenticatePlayer } from "../util/auth.js";
+import { persistGameRecord } from "../persistence/games.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -57,6 +58,9 @@ export function handleMakeMove(socket: GameSocket, io: GameServer) {
           winner: result.winner,
           winCondition: result.winCondition,
         });
+        persistGameRecord(room, result.winner, result.winCondition).catch(
+          (e) => console.error("Persistence error:", e),
+        );
       }
     } catch (e) {
       socket.emit("move_rejected", {

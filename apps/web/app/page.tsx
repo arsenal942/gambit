@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function Home() {
+  const { profile, loading } = useAuth();
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8">
+    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center gap-8">
       <div className="text-center">
         <h1 className="text-6xl font-bold tracking-tight text-amber-100">
           Gambit
@@ -10,6 +15,12 @@ export default function Home() {
         <p className="mt-3 text-lg text-gray-400">
           A tactical strategy board game
         </p>
+        {!loading && profile && (
+          <p className="mt-2 text-sm text-amber-200/70">
+            Welcome back, {profile.username} &middot; {profile.games_played}{" "}
+            game{profile.games_played !== 1 ? "s" : ""} played
+          </p>
+        )}
       </div>
       <div className="flex flex-col gap-3">
         <Link

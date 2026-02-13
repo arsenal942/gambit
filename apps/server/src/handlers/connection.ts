@@ -6,6 +6,7 @@ import type {
 import { RECONNECT_GRACE_PERIOD_MS } from "@gambit/shared";
 import { forfeit } from "@gambit/engine";
 import { findRoomBySocketId, getRoom } from "../rooms.js";
+import { persistGameRecord } from "../persistence/games.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -52,6 +53,9 @@ export function handleDisconnect(socket: GameSocket, io: GameServer) {
           winner: newState.winner,
           winCondition: "forfeit",
         });
+        persistGameRecord(currentRoom, newState.winner, "forfeit").catch(
+          (e) => console.error("Persistence error:", e),
+        );
       } catch {
         // Game already ended
       }
