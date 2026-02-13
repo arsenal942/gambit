@@ -12,7 +12,7 @@ import {
   ROWS,
   HIGHLIGHT_COLORS,
 } from "@/lib/constants";
-import { posToSvgX, posToSvgY, svgToPos } from "@/lib/engine-helpers";
+import { posToSvgX, posToSvgY, svgToPos, setFlipMode } from "@/lib/engine-helpers";
 import { BoardTile } from "./BoardTile";
 import { CapturePointMarkers } from "./CapturePointMarker";
 import { PieceIcon } from "./PieceIcon";
@@ -38,6 +38,7 @@ interface GameBoardProps {
   lastMove: LastMoveHighlight | null;
   onTileClick: (position: Position) => void;
   onPushDirectionClick: (direction: [number, number], resultingPosition: Position) => void;
+  flipBoard?: boolean;
 }
 
 export function GameBoard({
@@ -48,8 +49,13 @@ export function GameBoard({
   lastMove,
   onTileClick,
   onPushDirectionClick,
+  flipBoard = false,
 }: GameBoardProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Set flip mode so all coordinate helpers (posToSvgY, svgToPos) use the correct mapping.
+  // This runs during render, before child components call posToSvgY.
+  setFlipMode(flipBoard);
 
   const handleClick = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
@@ -153,7 +159,9 @@ export function GameBoard({
         {/* Row labels (A-K on left) */}
         {Array.from({ length: BOARD_ROWS }, (_, r) => {
           const label = ROWS[r];
-          const y = (10 - r) * TILE_SIZE + TILE_SIZE / 2;
+          const y = flipBoard
+            ? r * TILE_SIZE + TILE_SIZE / 2
+            : (10 - r) * TILE_SIZE + TILE_SIZE / 2;
           return (
             <text
               key={`row-${label}`}
