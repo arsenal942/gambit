@@ -11,6 +11,7 @@ import {
   handleDeclineDraw,
 } from "./handlers/meta.js";
 import { handleDisconnect } from "./handlers/connection.js";
+import { handleQueueJoin, handleQueueLeave } from "./handlers/matchmaking.js";
 import { getAllRooms, removeRoom } from "./rooms.js";
 
 const httpServer = createServer();
@@ -22,8 +23,16 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   },
 });
 
+let onlineCount = 0;
+
+function broadcastOnlineCount(): void {
+  io.emit("online_count", { count: onlineCount });
+}
+
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
+  onlineCount++;
+  broadcastOnlineCount();
 
   socket.on("create_game", handleCreateGame(socket));
   socket.on("join_game", handleJoinGame(socket, io));
@@ -32,7 +41,13 @@ io.on("connection", (socket) => {
   socket.on("offer_draw", handleOfferDraw(socket, io));
   socket.on("accept_draw", handleAcceptDraw(socket, io));
   socket.on("decline_draw", handleDeclineDraw(socket, io));
-  socket.on("disconnect", handleDisconnect(socket, io));
+  socket.on("queue_join", handleQueueJoin(socket, io));
+  socket.on("queue_leave", handleQueueLeave(socket));
+  socket.on("disconnect", () => {
+    onlineCount = Math.max(0, onlineCount - 1);
+    broadcastOnlineCount();
+    handleDisconnect(socket, io)();
+  });
 });
 
 // Stale room cleanup: every 5 minutes

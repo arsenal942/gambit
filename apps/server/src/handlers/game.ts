@@ -11,6 +11,7 @@ import { createRoom, getRoom, addPlayerToRoom } from "../rooms.js";
 import { authenticatePlayer } from "../util/auth.js";
 import { verifySupabaseJwt } from "../util/jwt.js";
 import { supabaseAdmin } from "../lib/supabase.js";
+import { persistGameStart } from "../persistence/games.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -156,6 +157,11 @@ export function handleJoinGame(socket: GameSocket, io: GameServer) {
           whiteUsername,
           blackUsername,
         });
+
+        // Persist game start for active games
+        persistGameStart(room).catch((e) =>
+          console.error("Game start persistence error:", e),
+        );
       }
     } catch (e) {
       callback({

@@ -24,6 +24,7 @@ export interface GameRoom {
   createdAt: number;
   pendingDrawOffer: Player | null;
   disconnectTimers: Map<Player, ReturnType<typeof setTimeout>>;
+  supabaseGameId: string | null;
 }
 
 // ── Client → Server events ───────────────────────────────────────────
@@ -65,6 +66,20 @@ export interface DeclineDrawPayload {
   playerToken: string;
 }
 
+export interface QueueJoinPayload {
+  supabaseToken?: string;
+}
+
+export interface QueueMatchedPayload {
+  gameId: string;
+  playerToken: string;
+  color: Player;
+}
+
+export interface OnlineCountPayload {
+  count: number;
+}
+
 export interface ClientToServerEvents {
   create_game: (
     payload: CreateGamePayload,
@@ -79,6 +94,11 @@ export interface ClientToServerEvents {
   offer_draw: (payload: OfferDrawPayload) => void;
   accept_draw: (payload: AcceptDrawPayload) => void;
   decline_draw: (payload: DeclineDrawPayload) => void;
+  queue_join: (
+    payload: QueueJoinPayload,
+    callback: (response: { success: boolean; error?: string }) => void,
+  ) => void;
+  queue_leave: () => void;
 }
 
 // ── Server → Client events ───────────────────────────────────────────
@@ -141,5 +161,7 @@ export interface ServerToClientEvents {
   opponent_reconnected: () => void;
   draw_offered: (payload: DrawOfferedPayload) => void;
   draw_declined: (payload: DrawDeclinedPayload) => void;
+  queue_matched: (payload: QueueMatchedPayload) => void;
+  online_count: (payload: OnlineCountPayload) => void;
   error: (payload: { message: string }) => void;
 }

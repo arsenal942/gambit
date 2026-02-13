@@ -7,12 +7,16 @@ import { RECONNECT_GRACE_PERIOD_MS } from "@gambit/shared";
 import { forfeit } from "@gambit/engine";
 import { findRoomBySocketId, getRoom } from "../rooms.js";
 import { persistGameRecord } from "../persistence/games.js";
+import { removeFromQueue } from "../matchmaking.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
 export function handleDisconnect(socket: GameSocket, io: GameServer) {
   return () => {
+    // Clean up matchmaking queue entry if any
+    removeFromQueue(socket.id);
+
     const result = findRoomBySocketId(socket.id);
     if (!result) return;
 
