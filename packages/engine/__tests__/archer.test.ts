@@ -24,6 +24,8 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     gamePhase: overrides.gamePhase ?? "playing",
     winner: overrides.winner ?? null,
     winCondition: overrides.winCondition ?? null,
+    pendingPromotion: overrides.pendingPromotion ?? null,
+    pendingRansom: overrides.pendingRansom ?? null,
   };
 }
 
