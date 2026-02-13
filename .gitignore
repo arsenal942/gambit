@@ -1,3 +1,18 @@
 node_modules/
 dist/
 *.tsbuildinfo
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+# Debug logs
+npm-debug.log*
