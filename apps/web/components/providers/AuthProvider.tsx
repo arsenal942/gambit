@@ -17,6 +17,8 @@ export interface Profile {
   avatar_url: string | null;
   games_played: number;
   games_won: number;
+  rating: number | null;
+  rating_provisional: boolean;
 }
 
 interface AuthContextType {
@@ -49,12 +51,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useCallback(
     async (userId: string) => {
       if (!supabase) return;
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle();
-      setProfile(data as Profile | null);
+
+      const [{ data: profileData }, { data: ratingData }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+        supabase
+          .from("ratings")
+          .select("rating, games_played")
+          .eq("user_id", userId)
+          .maybeSingle(),
+      ]);
+
+      if (!profileData) {
+        setProfile(null);
+        return;
+      }
+
+      setProfile({
+        ...profileData,
+        rating: ratingData?.rating ?? null,
+        rating_provisional: (ratingData?.games_played ?? 0) < 20,
+      } as Profile);
     },
     [supabase],
   );

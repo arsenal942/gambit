@@ -13,7 +13,7 @@ type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
 export function handleMakeMove(socket: GameSocket, io: GameServer) {
-  return (payload: MakeMovePayload) => {
+  return async (payload: MakeMovePayload) => {
     const room = getRoom(payload.gameId);
     if (!room) {
       socket.emit("move_rejected", { reason: "Game not found" });
@@ -53,14 +53,26 @@ export function handleMakeMove(socket: GameSocket, io: GameServer) {
       const result = isGameOver(newState);
       if (result.gameOver) {
         room.status = "ended";
-        io.to(room.id).emit("game_over", {
-          gameState: newState,
-          winner: result.winner,
-          winCondition: result.winCondition,
-        });
-        persistGameRecord(room, result.winner, result.winCondition).catch(
-          (e) => console.error("Persistence error:", e),
-        );
+        try {
+          const ratingChanges = await persistGameRecord(
+            room,
+            result.winner,
+            result.winCondition,
+          );
+          io.to(room.id).emit("game_over", {
+            gameState: newState,
+            winner: result.winner,
+            winCondition: result.winCondition,
+            ratingChanges,
+          });
+        } catch (e) {
+          console.error("Persistence error:", e);
+          io.to(room.id).emit("game_over", {
+            gameState: newState,
+            winner: result.winner,
+            winCondition: result.winCondition,
+          });
+        }
       }
     } catch (e) {
       socket.emit("move_rejected", {

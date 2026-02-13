@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { RatingHistoryChart } from "@/components/game/RatingHistoryChart";
 
 interface GameRecord {
   id: string;
@@ -12,6 +13,12 @@ interface GameRecord {
   moves_json: unknown[] | null;
   white_profile: { username: string } | null;
   black_profile: { username: string } | null;
+}
+
+interface RatedGameRecord {
+  white_player_id: string | null;
+  white_rating_after: number | null;
+  black_rating_after: number | null;
 }
 
 function formatResult(
@@ -60,6 +67,13 @@ export default async function ProfilePage({
     notFound();
   }
 
+  // Fetch rating
+  const { data: ratingData } = await supabase
+    .from("ratings")
+    .select("rating, rd, games_played")
+    .eq("user_id", profile.id)
+    .maybeSingle();
+
   // Fetch recent games
   const { data: games } = await supabase
     .from("games")
@@ -83,10 +97,32 @@ export default async function ProfilePage({
     .order("ended_at", { ascending: false })
     .limit(20);
 
+  // Fetch last 30 rated games for rating history chart
+  const { data: ratedGames } = await supabase
+    .from("games")
+    .select("white_player_id, white_rating_after, black_rating_after")
+    .or(
+      `white_player_id.eq.${profile.id},black_player_id.eq.${profile.id}`,
+    )
+    .eq("is_rated", true)
+    .not("white_rating_after", "is", null)
+    .order("ended_at", { ascending: true })
+    .limit(30);
+
+  const ratingHistory = (ratedGames as RatedGameRecord[] | null)
+    ?.map((g) => {
+      const isWhite = g.white_player_id === profile.id;
+      const rating = isWhite ? g.white_rating_after : g.black_rating_after;
+      return rating !== null ? { rating } : null;
+    })
+    .filter((d): d is { rating: number } => d !== null);
+
   const winRate =
     profile.games_played > 0
       ? Math.round((profile.games_won / profile.games_played) * 100)
       : 0;
+
+  const isProvisional = ratingData ? ratingData.games_played < 20 : false;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
@@ -109,6 +145,26 @@ export default async function ProfilePage({
         </div>
       </div>
 
+      {/* Rating display */}
+      {ratingData && (
+        <div className="mb-4 rounded-lg bg-gray-800 p-4 text-center">
+          <div className="text-3xl font-bold text-amber-100">
+            {Math.round(ratingData.rating)}
+            <span className="ml-2 text-sm font-normal text-gray-500">
+              ±{Math.round(ratingData.rd)}
+            </span>
+          </div>
+          <div className="mt-1 text-xs text-gray-400">
+            Glicko-2 Rating
+            {isProvisional && (
+              <span className="ml-2 rounded bg-gray-700 px-1.5 py-0.5 text-amber-300">
+                Provisional
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="mb-8 grid grid-cols-3 gap-4">
         <div className="rounded-lg bg-gray-800 p-4 text-center">
@@ -128,6 +184,11 @@ export default async function ProfilePage({
           <div className="text-xs text-gray-400">Win Rate</div>
         </div>
       </div>
+
+      {/* Rating history chart */}
+      {ratingHistory && ratingHistory.length >= 2 && (
+        <RatingHistoryChart data={ratingHistory} />
+      )}
 
       {/* Recent games */}
       <h2 className="mb-4 text-lg font-semibold text-gray-200">

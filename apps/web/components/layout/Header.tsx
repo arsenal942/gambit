@@ -26,6 +26,12 @@ export function Header() {
             >
               Play
             </Link>
+            <Link
+              href="/leaderboard"
+              className="text-sm text-gray-400 transition-colors hover:text-gray-200"
+            >
+              Leaderboard
+            </Link>
           </nav>
         </div>
 
@@ -43,6 +49,11 @@ export function Header() {
                   {profile.username[0].toUpperCase()}
                 </span>
                 <span>{profile.username}</span>
+                {profile.rating !== null && (
+                  <span className="text-xs text-amber-400">
+                    {Math.round(profile.rating)}
+                  </span>
+                )}
               </button>
               {menuOpen && (
                 <>

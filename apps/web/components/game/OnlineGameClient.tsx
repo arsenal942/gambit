@@ -160,6 +160,8 @@ export function OnlineGameClient({
             winner={gameState.winner}
             winCondition={gameState.winCondition}
             onNewGame={() => router.push("/game/online")}
+            playerColor={playerColor}
+            ratingChanges={onlineState.ratingChanges}
           />
         )}
         {gameState.gamePhase === "awaitingPromotion" && isMyTurn && (

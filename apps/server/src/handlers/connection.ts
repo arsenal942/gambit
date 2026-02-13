@@ -40,7 +40,7 @@ export function handleDisconnect(socket: GameSocket, io: GameServer) {
     }
 
     // Start grace period timer
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const currentRoom = getRoom(room.id);
       if (!currentRoom || currentRoom.status !== "playing") return;
 
@@ -52,14 +52,26 @@ export function handleDisconnect(socket: GameSocket, io: GameServer) {
         currentRoom.gameState = newState;
         currentRoom.status = "ended";
 
-        io.to(currentRoom.id).emit("game_over", {
-          gameState: newState,
-          winner: newState.winner,
-          winCondition: "forfeit",
-        });
-        persistGameRecord(currentRoom, newState.winner, "forfeit").catch(
-          (e) => console.error("Persistence error:", e),
-        );
+        try {
+          const ratingChanges = await persistGameRecord(
+            currentRoom,
+            newState.winner,
+            "forfeit",
+          );
+          io.to(currentRoom.id).emit("game_over", {
+            gameState: newState,
+            winner: newState.winner,
+            winCondition: "forfeit",
+            ratingChanges,
+          });
+        } catch (e) {
+          console.error("Persistence error:", e);
+          io.to(currentRoom.id).emit("game_over", {
+            gameState: newState,
+            winner: newState.winner,
+            winCondition: "forfeit",
+          });
+        }
       } catch {
         // Game already ended
       }

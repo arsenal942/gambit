@@ -13,6 +13,7 @@ import {
 import { handleDisconnect } from "./handlers/connection.js";
 import { handleQueueJoin, handleQueueLeave } from "./handlers/matchmaking.js";
 import { getAllRooms, removeRoom } from "./rooms.js";
+import { startMatchmakingLoop } from "./matchmaking.js";
 
 const httpServer = createServer();
 
@@ -65,4 +66,5 @@ setInterval(() => {
 
 httpServer.listen(config.port, () => {
   console.log(`Gambit server listening on port ${config.port}`);
+  startMatchmakingLoop(io);
 });

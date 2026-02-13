@@ -12,6 +12,7 @@ import type {
   GameUpdatedPayload,
   MoveRejectedPayload,
   GameOverPayload,
+  GameOverRatingChanges,
   OpponentDisconnectedPayload,
   DrawOfferedPayload,
   DrawDeclinedPayload,
@@ -63,6 +64,7 @@ export interface OnlineGameState {
   drawOffer: DrawOfferState;
   isMyTurn: boolean;
   opponentUsername: string | null;
+  ratingChanges: GameOverRatingChanges | null;
 
   // Actions
   createGame: (preferredColor?: Player) => void;
@@ -92,6 +94,8 @@ export function useOnlineGameState(): OnlineGameState {
     isOurs: false,
   });
   const [opponentUsername, setOpponentUsername] = useState<string | null>(null);
+  const [ratingChanges, setRatingChanges] =
+    useState<GameOverRatingChanges | null>(null);
 
   const socketRef = useRef<GameSocket | null>(null);
   const playerTokenRef = useRef<string | null>(null);
@@ -207,6 +211,9 @@ export function useOnlineGameState(): OnlineGameState {
     socket.on("game_over", (payload: GameOverPayload) => {
       setGameState(payload.gameState);
       setOnlinePhase("ended");
+      if (payload.ratingChanges) {
+        setRatingChanges(payload.ratingChanges);
+      }
     });
 
     socket.on(
@@ -399,6 +406,7 @@ export function useOnlineGameState(): OnlineGameState {
     drawOffer,
     isMyTurn,
     opponentUsername,
+    ratingChanges,
     createGame,
     joinGame,
     forfeitGame,
