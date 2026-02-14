@@ -13,6 +13,8 @@ interface GameRecord {
   moves_json: unknown[] | null;
   white_profile: { username: string } | null;
   black_profile: { username: string } | null;
+  is_bot_game: boolean;
+  bot_id: string | null;
 }
 
 interface RatedGameRecord {
@@ -36,7 +38,18 @@ function formatResult(
     : { label: "L", color: "text-red-400" };
 }
 
+const BOT_DISPLAY_NAMES: Record<string, string> = {
+  squire: "Squire (600)",
+  soldier: "Soldier (900)",
+  captain: "Captain (1200)",
+  commander: "Commander (1500)",
+  warlord: "Warlord (1800)",
+};
+
 function getOpponentName(game: GameRecord, profileId: string): string {
+  if (game.is_bot_game && game.bot_id) {
+    return BOT_DISPLAY_NAMES[game.bot_id] ?? `Bot (${game.bot_id})`;
+  }
   const isWhite = game.white_player_id === profileId;
   if (isWhite) {
     return game.black_profile?.username ?? "Anonymous";
@@ -86,6 +99,8 @@ export default async function ProfilePage({
       win_condition,
       ended_at,
       moves_json,
+      is_bot_game,
+      bot_id,
       white_profile:profiles!games_white_player_id_fkey(username),
       black_profile:profiles!games_black_player_id_fkey(username)
     `,
@@ -214,6 +229,11 @@ export default async function ProfilePage({
                   <span className="text-sm text-gray-200">
                     vs {getOpponentName(game, profile.id)}
                   </span>
+                  {game.is_bot_game && (
+                    <span className="rounded bg-gray-700 px-1.5 py-0.5 text-[10px] font-medium uppercase text-amber-300">
+                      Bot
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                   <span>{moveCount} moves</span>

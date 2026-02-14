@@ -6,3 +6,4 @@ export * from "./units/knight.js";
 export * from "./moves.js";
 export * from "./victory.js";
 export * from "./game.js";
+export * from "./ai/index.js";

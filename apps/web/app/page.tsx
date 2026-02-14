@@ -34,6 +34,12 @@ export default function Home() {
           Play Local Game
         </Link>
         <Link
+          href="/game/bot"
+          className="rounded-lg bg-amber-700 px-8 py-3 text-center text-lg font-semibold text-white transition-colors hover:bg-amber-600"
+        >
+          Play vs Bot
+        </Link>
+        <Link
           href="/game/online"
           className="rounded-lg bg-gray-700 px-8 py-3 text-center text-lg font-semibold text-white transition-colors hover:bg-gray-600"
         >
