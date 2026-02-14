@@ -28,6 +28,12 @@ export default function Home() {
       </div>
       <div className="flex flex-col gap-3">
         <Link
+          href="/tutorial"
+          className="rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 px-8 py-3 text-center text-lg font-semibold text-white shadow-lg shadow-amber-900/30 transition-all hover:from-amber-500 hover:to-amber-600"
+        >
+          Learn to Play
+        </Link>
+        <Link
           href="/game/local"
           className="rounded-lg bg-amber-700 px-8 py-3 text-center text-lg font-semibold text-white transition-colors hover:bg-amber-600"
         >

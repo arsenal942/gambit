@@ -21,6 +21,12 @@ export function Header() {
           </Link>
           <nav className="flex items-center gap-4">
             <Link
+              href="/tutorial"
+              className="text-sm text-gray-400 transition-colors hover:text-gray-200"
+            >
+              Learn
+            </Link>
+            <Link
               href="/game/online"
               className="text-sm text-gray-400 transition-colors hover:text-gray-200"
             >

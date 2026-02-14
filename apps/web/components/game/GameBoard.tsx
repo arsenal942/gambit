@@ -39,6 +39,7 @@ interface GameBoardProps {
   onTileClick: (position: Position) => void;
   onPushDirectionClick: (direction: [number, number], resultingPosition: Position) => void;
   flipBoard?: boolean;
+  children?: React.ReactNode;
 }
 
 export function GameBoard({
@@ -50,6 +51,7 @@ export function GameBoard({
   onTileClick,
   onPushDirectionClick,
   flipBoard = false,
+  children,
 }: GameBoardProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -142,6 +144,9 @@ export function GameBoard({
 
         {/* Layer 4: Action dots */}
         <ActionDots highlights={highlights} />
+
+        {/* Layer 4b: Optional overlay (tutorial annotations, etc.) */}
+        {children}
 
         {/* Layer 5: Pieces */}
         {pieces.map((piece) => (

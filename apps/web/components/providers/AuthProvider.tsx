@@ -19,6 +19,8 @@ export interface Profile {
   games_won: number;
   rating: number | null;
   rating_provisional: boolean;
+  tutorial_completed: boolean;
+  tutorial_lessons_completed: number;
 }
 
 interface AuthContextType {
