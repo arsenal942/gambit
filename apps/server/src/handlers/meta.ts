@@ -11,6 +11,7 @@ import { forfeit, offerDraw, type Player } from "@gambit/engine";
 import { getRoom } from "../rooms.js";
 import { authenticatePlayer } from "../util/auth.js";
 import { persistGameRecord } from "../persistence/games.js";
+import { isValidGameId, isValidPlayerToken } from "../middleware/validation.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -21,6 +22,8 @@ function opponentColor(color: Player): Player {
 
 export function handleForfeit(socket: GameSocket, io: GameServer) {
   return async (payload: ForfeitPayload) => {
+    if (!isValidGameId(payload.gameId) || !isValidPlayerToken(payload.playerToken)) return;
+
     const room = getRoom(payload.gameId);
     if (!room || room.status !== "playing") return;
 
@@ -60,6 +63,8 @@ export function handleForfeit(socket: GameSocket, io: GameServer) {
 
 export function handleOfferDraw(socket: GameSocket, io: GameServer) {
   return (payload: OfferDrawPayload) => {
+    if (!isValidGameId(payload.gameId) || !isValidPlayerToken(payload.playerToken)) return;
+
     const room = getRoom(payload.gameId);
     if (!room || room.status !== "playing") return;
 
@@ -87,6 +92,8 @@ export function handleOfferDraw(socket: GameSocket, io: GameServer) {
 
 export function handleAcceptDraw(socket: GameSocket, io: GameServer) {
   return async (payload: AcceptDrawPayload) => {
+    if (!isValidGameId(payload.gameId) || !isValidPlayerToken(payload.playerToken)) return;
+
     const room = getRoom(payload.gameId);
     if (!room || room.status !== "playing") return;
 
@@ -128,6 +135,8 @@ export function handleAcceptDraw(socket: GameSocket, io: GameServer) {
 
 export function handleDeclineDraw(socket: GameSocket, io: GameServer) {
   return (payload: DeclineDrawPayload) => {
+    if (!isValidGameId(payload.gameId) || !isValidPlayerToken(payload.playerToken)) return;
+
     const room = getRoom(payload.gameId);
     if (!room || room.status !== "playing") return;
 

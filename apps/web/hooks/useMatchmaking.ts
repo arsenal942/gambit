@@ -53,6 +53,11 @@ export function useMatchmaking(): MatchmakingState {
       setPlayerColor(payload.gameId, payload.color);
     });
 
+    socket.on("connect_error", () => {
+      setConnectionStatus("disconnected");
+      setError("Unable to reach game server");
+    });
+
     socket.connect();
 
     return () => {
@@ -60,6 +65,7 @@ export function useMatchmaking(): MatchmakingState {
       socket.off("disconnect");
       socket.off("online_count");
       socket.off("queue_matched");
+      socket.off("connect_error");
       disconnectSocket();
     };
   }, []);

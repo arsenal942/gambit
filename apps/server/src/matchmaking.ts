@@ -53,6 +53,13 @@ export function startMatchmakingLoop(io: GameServer): void {
   matchInterval = setInterval(() => tryMatch(io), MATCHMAKING_RECHECK_MS);
 }
 
+export function stopMatchmakingLoop(): void {
+  if (matchInterval) {
+    clearInterval(matchInterval);
+    matchInterval = null;
+  }
+}
+
 async function fetchUsername(userId: string | null): Promise<string | null> {
   if (!userId || !supabaseAdmin) return null;
   const { data } = await supabaseAdmin
