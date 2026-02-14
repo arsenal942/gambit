@@ -613,12 +613,12 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
       targetPosition: pos("D", 2),
     });
 
-    // Archer stays at B2
-    expect(getPieceAt(state.board, pos("B", 2))?.id).toBe("wa");
+    // Archer moves to target position D2
+    expect(getPieceAt(state.board, pos("B", 2))).toBeNull();
     // Screen unaffected
     expect(getPieceAt(state.board, pos("C", 2))?.id).toBe("wf");
-    // Target removed
-    expect(getPieceAt(state.board, pos("D", 2))).toBeNull();
+    // Archer now at D2
+    expect(getPieceAt(state.board, pos("D", 2))?.id).toBe("wa");
     // Captured
     expect(state.capturedPieces.black).toHaveLength(1);
     expect(state.capturedPieces.black[0].id).toBe("bf");
@@ -639,9 +639,9 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
       targetPosition: pos("D", 2),
     });
 
-    expect(getPieceAt(state.board, pos("B", 2))?.id).toBe("wa");
+    expect(getPieceAt(state.board, pos("B", 2))).toBeNull();
     expect(getPieceAt(state.board, pos("C", 2))?.id).toBe("bk"); // screen untouched
-    expect(getPieceAt(state.board, pos("D", 2))).toBeNull();
+    expect(getPieceAt(state.board, pos("D", 2))?.id).toBe("wa"); // archer moved to target
     assertStateIntegrity(state);
   });
 
@@ -665,7 +665,7 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
       pieceId: "wa",
       targetPosition: pos("E", 2),
     });
-    expect(getPieceAt(state.board, pos("E", 2))).toBeNull();
+    expect(getPieceAt(state.board, pos("E", 2))?.id).toBe("wa"); // archer moved to target
 
     // Screen at distance 2, target at distance 3
     let state2 = createCustomGame([
@@ -1463,8 +1463,8 @@ describe("Group 7: Annihilation Victory", () => {
     expect(state.gamePhase).toBe("ended");
     expect(state.winner).toBe("white");
     expect(state.winCondition).toBe("annihilation");
-    // Archer stays at B2
-    expect(getPieceAt(state.board, pos("B", 5))?.id).toBe("wa");
+    // Archer moved to target position D5
+    expect(getPieceAt(state.board, pos("D", 5))?.id).toBe("wa");
   });
 
   it("7.3 Last piece via knight capture — annihilation beats ransom", () => {
@@ -2530,11 +2530,11 @@ describe("Group 15: Complex Mechanic Interactions", () => {
     // White longshots bf at F1 (screen = wf at E1, dist 2)
     state = executeMove(state, { type: "longshot", pieceId: "wa", targetPosition: pos("F", 1) });
 
-    // bf removed, F1 now uncontrolled
-    expect(state.capturePoints["F1"]).toBeNull();
-    expect(getPieceAt(state.board, pos("F", 1))).toBeNull();
-    // Archer stays at D1
-    expect(getPieceAt(state.board, pos("D", 1))?.id).toBe("wa");
+    // bf removed, archer now at F1 — white controls the capture point
+    expect(state.capturePoints["F1"]).toBe("white");
+    expect(getPieceAt(state.board, pos("F", 1))?.id).toBe("wa");
+    // Archer no longer at D1
+    expect(getPieceAt(state.board, pos("D", 1))).toBeNull();
   });
 
   it("15.4 Capture at back row triggers promotion (non-annihilation)", () => {
@@ -2944,7 +2944,8 @@ describe("Group 18: Capture Point Control Stress", () => {
     expect(state.capturePoints["F1"]).toBe("black");
 
     state = executeMove(state, { type: "longshot", pieceId: "wa", targetPosition: pos("F", 1) });
-    expect(state.capturePoints["F1"]).toBeNull();
+    // Archer moves to F1, so white now controls the capture point
+    expect(state.capturePoints["F1"]).toBe("white");
   });
 
   it("18.4 Flag control persists through unrelated moves", () => {

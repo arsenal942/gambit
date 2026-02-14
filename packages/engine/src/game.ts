@@ -430,8 +430,9 @@ function handleLongshot(
   }
 
   const state = cloneGameState(gameState);
+  const clonedPiece = findPieceById(state.board, action.pieceId)!;
 
-  // Remove the target piece (archer stays in place)
+  // Remove the target piece
   const capturedPiece = getPieceAt(state.board, action.targetPosition);
   if (!capturedPiece) {
     throw new Error("No piece at longshot target");
@@ -439,10 +440,17 @@ function handleLongshot(
   removePieceAt(state.board, action.targetPosition);
   state.capturedPieces[capturedPiece.player].push(capturedPiece);
 
+  // Move archer to the target position
+  const from = { ...clonedPiece.position };
+  removePieceAt(state.board, clonedPiece.position);
+  clonedPiece.position = { ...action.targetPosition };
+  clonedPiece.hasMoved = true;
+  setPieceAt(state.board, action.targetPosition, clonedPiece);
+
   // Record move
   state.moveHistory.push({
-    piece: { ...findPieceById(state.board, action.pieceId)! },
-    from: { ...piece.position },
+    piece: { ...clonedPiece },
+    from,
     to: { ...action.targetPosition },
     type: "longshot",
     capturedPiece: { ...capturedPiece },

@@ -1145,8 +1145,8 @@ describe("getArcherLongshots", () => {
     });
   });
 
-  describe("archer does NOT move after longshot", () => {
-    it("archer's position is the same as the returned piece's position (stays in place)", () => {
+  describe("longshot target positions", () => {
+    it("targetPosition is the enemy position where the archer will move", () => {
       const board = createEmptyBoard();
       const archer = placePiece(board, makePiece({
         player: "white",
@@ -1168,12 +1168,9 @@ describe("getArcherLongshots", () => {
       const longshots = getArcherLongshots(archer, state);
 
       expect(longshots).toHaveLength(1);
-      // The longshot result does NOT indicate the archer moves — it captures at range
-      // The archer's position should remain unchanged
+      // getArcherLongshots returns target candidates; archer movement is handled by executeMove
       expect(archer.position).toEqual({ col: 5, row: "D" });
-      // The targetPosition is where the enemy is, NOT where the archer goes
       expect(longshots[0].targetPosition).toEqual({ col: 5, row: "F" });
-      expect(longshots[0].targetPosition).not.toEqual(archer.position);
     });
   });
 

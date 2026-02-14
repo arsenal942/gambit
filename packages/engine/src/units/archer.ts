@@ -93,7 +93,7 @@ export function getArcherMoves(piece: Piece, gameState: GameState): Position[] {
 /**
  * Returns all legal longshot targets for an Archer.
  *
- * Longshot is a ranged capture — the Archer stays in place and removes an enemy piece at range.
+ * Longshot is a ranged capture — the Archer fires through a screen piece and moves to the target position.
  *
  * Forward Longshot: up to 3 tiles directly forward.
  * Backward/Sideways Longshot: up to 2 tiles directly behind or sideways.

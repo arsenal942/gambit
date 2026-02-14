@@ -406,7 +406,7 @@ describe("executeMove — CaptureAction", () => {
 // ── Longshot execution ───────────────────────────────────────────────
 
 describe("executeMove — LongshotAction", () => {
-  it("archer longshot removes enemy and archer stays in place", () => {
+  it("archer longshot removes enemy and archer moves to target position", () => {
     const board = createEmptyBoard();
     placePiece(board, makePiece({
       id: "w-archer-1",
@@ -438,8 +438,8 @@ describe("executeMove — LongshotAction", () => {
       targetPosition: { col: 5, row: "F" },
     });
 
-    expect(getPieceAt(next.board, { col: 5, row: "D" })?.id).toBe("w-archer-1");
-    expect(getPieceAt(next.board, { col: 5, row: "F" })).toBeNull();
+    expect(getPieceAt(next.board, { col: 5, row: "D" })).toBeNull();
+    expect(getPieceAt(next.board, { col: 5, row: "F" })?.id).toBe("w-archer-1");
     expect(getPieceAt(next.board, { col: 5, row: "E" })?.id).toBe("w-footman-1");
     expect(next.capturedPieces.black.some((p) => p.id === "b-footman-1")).toBe(true);
     expect(next.turn).toBe("black");
