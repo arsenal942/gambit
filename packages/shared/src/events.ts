@@ -130,10 +130,23 @@ export interface MoveRejectedPayload {
   reason: string;
 }
 
+export interface RatingChangeInfo {
+  before: number;
+  after: number;
+  rd: number;
+  provisional: boolean;
+}
+
+export interface GameOverRatingChanges {
+  white: RatingChangeInfo;
+  black: RatingChangeInfo;
+}
+
 export interface GameOverPayload {
   gameState: GameState;
   winner: Player | null;
   winCondition: string | null;
+  ratingChanges?: GameOverRatingChanges;
 }
 
 export interface OpponentDisconnectedPayload {

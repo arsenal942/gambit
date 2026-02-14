@@ -20,7 +20,7 @@ function opponentColor(color: Player): Player {
 }
 
 export function handleForfeit(socket: GameSocket, io: GameServer) {
-  return (payload: ForfeitPayload) => {
+  return async (payload: ForfeitPayload) => {
     const room = getRoom(payload.gameId);
     if (!room || room.status !== "playing") return;
 
@@ -32,14 +32,26 @@ export function handleForfeit(socket: GameSocket, io: GameServer) {
       room.gameState = newState;
       room.status = "ended";
 
-      io.to(room.id).emit("game_over", {
-        gameState: newState,
-        winner: newState.winner,
-        winCondition: newState.winCondition,
-      });
-      persistGameRecord(room, newState.winner, newState.winCondition).catch(
-        (e) => console.error("Persistence error:", e),
-      );
+      try {
+        const ratingChanges = await persistGameRecord(
+          room,
+          newState.winner,
+          newState.winCondition,
+        );
+        io.to(room.id).emit("game_over", {
+          gameState: newState,
+          winner: newState.winner,
+          winCondition: newState.winCondition,
+          ratingChanges,
+        });
+      } catch (e) {
+        console.error("Persistence error:", e);
+        io.to(room.id).emit("game_over", {
+          gameState: newState,
+          winner: newState.winner,
+          winCondition: newState.winCondition,
+        });
+      }
     } catch {
       // Game already ended
     }
@@ -74,7 +86,7 @@ export function handleOfferDraw(socket: GameSocket, io: GameServer) {
 }
 
 export function handleAcceptDraw(socket: GameSocket, io: GameServer) {
-  return (payload: AcceptDrawPayload) => {
+  return async (payload: AcceptDrawPayload) => {
     const room = getRoom(payload.gameId);
     if (!room || room.status !== "playing") return;
 
@@ -92,14 +104,22 @@ export function handleAcceptDraw(socket: GameSocket, io: GameServer) {
       room.status = "ended";
       room.pendingDrawOffer = null;
 
-      io.to(room.id).emit("game_over", {
-        gameState: newState,
-        winner: null,
-        winCondition: "draw",
-      });
-      persistGameRecord(room, null, "draw").catch(
-        (e) => console.error("Persistence error:", e),
-      );
+      try {
+        const ratingChanges = await persistGameRecord(room, null, "draw");
+        io.to(room.id).emit("game_over", {
+          gameState: newState,
+          winner: null,
+          winCondition: "draw",
+          ratingChanges,
+        });
+      } catch (e) {
+        console.error("Persistence error:", e);
+        io.to(room.id).emit("game_over", {
+          gameState: newState,
+          winner: null,
+          winCondition: "draw",
+        });
+      }
     } catch {
       socket.emit("error", { message: "Draw could not be finalized" });
     }

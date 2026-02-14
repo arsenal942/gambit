@@ -17,7 +17,11 @@ export default function Home() {
         </p>
         {!loading && profile && (
           <p className="mt-2 text-sm text-amber-200/70">
-            Welcome back, {profile.username} &middot; {profile.games_played}{" "}
+            Welcome back, {profile.username}
+            {profile.rating !== null && (
+              <> &middot; Rating: {Math.round(profile.rating)}</>
+            )}
+            {" "}&middot; {profile.games_played}{" "}
             game{profile.games_played !== 1 ? "s" : ""} played
           </p>
         )}
@@ -34,6 +38,12 @@ export default function Home() {
           className="rounded-lg bg-gray-700 px-8 py-3 text-center text-lg font-semibold text-white transition-colors hover:bg-gray-600"
         >
           Play Online
+        </Link>
+        <Link
+          href="/leaderboard"
+          className="rounded-lg bg-gray-700 px-8 py-3 text-center text-lg font-semibold text-white transition-colors hover:bg-gray-600"
+        >
+          Leaderboard
         </Link>
       </div>
     </main>

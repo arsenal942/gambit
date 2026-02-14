@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "../lib/supabase.js";
-import type { GameRoom } from "@gambit/shared";
+import type { GameRoom, GameOverRatingChanges } from "@gambit/shared";
 import type { Player } from "@gambit/engine";
+import { processRatingUpdate } from "./ratings.js";
 
 /**
  * Persist a game record at start (status = 'playing') so that
@@ -43,14 +44,14 @@ export async function persistGameRecord(
   room: GameRoom,
   winner: Player | null,
   winCondition: string | null,
-): Promise<void> {
-  if (!supabaseAdmin) return;
+): Promise<GameOverRatingChanges | undefined> {
+  if (!supabaseAdmin) return undefined;
 
   const whiteUserId = room.players.white?.userId ?? null;
   const blackUserId = room.players.black?.userId ?? null;
 
   // Only persist if at least one player is authenticated
-  if (!whiteUserId && !blackUserId) return;
+  if (!whiteUserId && !blackUserId) return undefined;
 
   const result =
     winner === "white"
@@ -76,7 +77,7 @@ export async function persistGameRecord(
 
       if (gameError) {
         console.error("Failed to update game record:", gameError);
-        return;
+        return undefined;
       }
     } else {
       // Fallback: insert new record (backward compatible)
@@ -94,7 +95,7 @@ export async function persistGameRecord(
 
       if (gameError) {
         console.error("Failed to persist game:", gameError);
-        return;
+        return undefined;
       }
     }
 
@@ -119,7 +120,12 @@ export async function persistGameRecord(
         });
       }
     }
+
+    // Process rating update (only for games where both players are logged in)
+    const ratingChanges = await processRatingUpdate(room, winner);
+    return ratingChanges ?? undefined;
   } catch (e) {
     console.error("Game persistence error:", e);
+    return undefined;
   }
 }
