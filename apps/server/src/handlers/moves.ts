@@ -8,12 +8,18 @@ import { executeMove, isGameOver } from "@gambit/engine";
 import { getRoom } from "../rooms.js";
 import { authenticatePlayer } from "../util/auth.js";
 import { persistGameRecord } from "../persistence/games.js";
+import { isValidGameId, isValidPlayerToken } from "../middleware/validation.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
 export function handleMakeMove(socket: GameSocket, io: GameServer) {
   return async (payload: MakeMovePayload) => {
+    if (!isValidGameId(payload.gameId) || !isValidPlayerToken(payload.playerToken)) {
+      socket.emit("move_rejected", { reason: "Invalid request" });
+      return;
+    }
+
     const room = getRoom(payload.gameId);
     if (!room) {
       socket.emit("move_rejected", { reason: "Game not found" });

@@ -12,6 +12,7 @@ import { authenticatePlayer } from "../util/auth.js";
 import { verifySupabaseJwt } from "../util/jwt.js";
 import { supabaseAdmin } from "../lib/supabase.js";
 import { persistGameStart } from "../persistence/games.js";
+import { isValidGameId, isValidColor } from "../middleware/validation.js";
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
@@ -31,6 +32,14 @@ export function handleCreateGame(socket: GameSocket) {
     payload: CreateGamePayload,
     callback: (resp: GameCreatedResponse) => void,
   ) => {
+    if (
+      payload.preferredColor !== undefined &&
+      !isValidColor(payload.preferredColor)
+    ) {
+      callback({ success: false, error: "Invalid color preference" });
+      return;
+    }
+
     try {
       const userId = payload.supabaseToken
         ? await verifySupabaseJwt(payload.supabaseToken)
@@ -66,6 +75,11 @@ export function handleJoinGame(socket: GameSocket, io: GameServer) {
     payload: JoinGamePayload,
     callback: (resp: JoinGameResponse) => void,
   ) => {
+    if (!isValidGameId(payload.gameId)) {
+      callback({ success: false, error: "Invalid game ID" });
+      return;
+    }
+
     const room = getRoom(payload.gameId);
     if (!room) {
       callback({ success: false, error: "Game not found" });

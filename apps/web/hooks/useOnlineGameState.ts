@@ -246,6 +246,11 @@ export function useOnlineGameState(): OnlineGameState {
       setTimeout(() => setError(null), 3000);
     });
 
+    socket.on("connect_error", () => {
+      setConnectionStatus("disconnected");
+      setError("Unable to connect to game server. Please try again later.");
+    });
+
     socket.connect();
 
     return () => {

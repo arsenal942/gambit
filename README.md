@@ -209,7 +209,7 @@ NEXT_PUBLIC_GAME_SERVER_URL=http://localhost:3001
 PORT=3001
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGINS=http://localhost:3000
 ```
 
 ---
@@ -242,24 +242,24 @@ Gambit uses a split deployment: the Next.js frontend on **Vercel** and the Socke
 ### Frontend → Vercel
 
 1. Connect your GitHub repo to Vercel
-2. Set the framework to **Next.js**
-3. If using a monorepo, set the root directory to `apps/web/` or configure `vercel.json` at the project root
-4. Add environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_GAME_SERVER_URL` → your Railway URL (e.g., `https://gambit-server-production.up.railway.app`)
-5. Deploy — Vercel auto-builds on push to `main`
+2. Vercel auto-detects the `vercel.json` at the project root, which handles the monorepo build order (engine → shared → web)
+3. Add environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL` — your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — your Supabase anon key
+   - `NEXT_PUBLIC_GAME_SERVER_URL` — your Railway server URL (e.g., `https://gambit-server-production.up.railway.app`)
+4. Deploy — Vercel auto-builds on push to `main`
 
 ### Game Server → Railway
 
 1. Connect your GitHub repo to Railway
-2. Point it at the `apps/server/` directory (or use the Dockerfile)
+2. Set the Dockerfile path to `apps/server/Dockerfile` (multi-stage build that compiles engine, shared, and server)
 3. Add environment variables:
-   - `CORS_ORIGIN` → your Vercel domain (e.g., `https://gambit.vercel.app`)
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `CORS_ORIGINS` — your Vercel domain(s), comma-separated (e.g., `https://gambit.vercel.app,https://gambit.snowkeystudios.com`)
+   - `SUPABASE_URL` — your Supabase project URL
+   - `SUPABASE_SERVICE_ROLE_KEY` — your Supabase service role key
    - `PORT` is set automatically by Railway
-4. Deploy — Railway auto-builds on push to `main`
+4. The server exposes a health check at `GET /health` for readiness detection
+5. Deploy — Railway auto-builds on push to `main`
 
 ### Database → Supabase
 
@@ -267,13 +267,26 @@ Supabase is already hosted. Ensure:
 - RLS policies are enabled on all tables
 - Auth redirect URLs include your production domain
 - Service role key is only used server-side (never exposed to the client)
+- Indexes exist on: `profiles(username)`, `games(white_player_id, black_player_id, status, created_at)`, `ratings(rating DESC)`
+
+### Environment Variable Reference
+
+| Variable | Service | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Vercel | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Vercel | Supabase anon key (safe for client) |
+| `NEXT_PUBLIC_GAME_SERVER_URL` | Vercel | Railway server URL |
+| `PORT` | Railway | Set automatically by Railway |
+| `CORS_ORIGINS` | Railway | Comma-separated allowed origins |
+| `SUPABASE_URL` | Railway | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Railway | Supabase service role key (secret) |
 
 ### Custom Domain
 
 To use a custom domain like `gambit.snowkeystudios.com`:
 1. Add the domain in Vercel project settings
-2. Update `CORS_ORIGIN` on Railway to include the custom domain
-3. Update Supabase Auth redirect URLs
+2. Update `CORS_ORIGINS` on Railway to include the custom domain
+3. Update Supabase Auth redirect URLs to include the custom domain
 
 ---
 

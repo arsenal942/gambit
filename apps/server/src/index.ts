@@ -13,9 +13,27 @@ import {
 import { handleDisconnect } from "./handlers/connection.js";
 import { handleQueueJoin, handleQueueLeave } from "./handlers/matchmaking.js";
 import { getAllRooms, removeRoom } from "./rooms.js";
-import { startMatchmakingLoop } from "./matchmaking.js";
+import { startMatchmakingLoop, stopMatchmakingLoop } from "./matchmaking.js";
+import { rateLimitMiddleware } from "./middleware/rateLimit.js";
 
-const httpServer = createServer();
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+});
+
+const httpServer = createServer((req, res) => {
+  if (req.method === "GET" && req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok", uptime: process.uptime() }));
+    return;
+  }
+  res.writeHead(404);
+  res.end();
+});
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: {
@@ -29,6 +47,8 @@ let onlineCount = 0;
 function broadcastOnlineCount(): void {
   io.emit("online_count", { count: onlineCount });
 }
+
+io.use(rateLimitMiddleware);
 
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
@@ -52,7 +72,7 @@ io.on("connection", (socket) => {
 });
 
 // Stale room cleanup: every 5 minutes
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [id, room] of getAllRooms()) {
     if (room.status === "ended" && now - room.createdAt > 60 * 60 * 1000) {
@@ -68,3 +88,23 @@ httpServer.listen(config.port, () => {
   console.log(`Gambit server listening on port ${config.port}`);
   startMatchmakingLoop(io);
 });
+
+function gracefulShutdown(signal: string): void {
+  console.log(`Received ${signal}, shutting down gracefully...`);
+  clearInterval(cleanupInterval);
+  stopMatchmakingLoop();
+  io.close(() => {
+    httpServer.close(() => {
+      console.log("Server shut down");
+      process.exit(0);
+    });
+  });
+  // Force exit after 10 seconds if graceful shutdown hangs
+  setTimeout(() => {
+    console.error("Forced shutdown after timeout");
+    process.exit(1);
+  }, 10_000);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
