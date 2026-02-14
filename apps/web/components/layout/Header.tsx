@@ -90,12 +90,20 @@ export function Header() {
               Complete Setup
             </Link>
           ) : (
-            <Link
-              href="/auth"
-              className="rounded-lg bg-gray-700 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-gray-600"
-            >
-              Sign In
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/auth/sign-in"
+                className="px-3 py-1.5 text-sm font-medium text-gray-300 transition-colors hover:text-white"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/sign-up"
+                className="rounded-lg bg-amber-700 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+              >
+                Sign Up
+              </Link>
+            </div>
           )}
         </div>
       </div>

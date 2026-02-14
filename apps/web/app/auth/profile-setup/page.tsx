@@ -18,7 +18,7 @@ export default function ProfileSetupPage() {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push("/auth");
+        router.push("/auth/sign-in");
       } else if (profile) {
         router.push("/");
       }
