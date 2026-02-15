@@ -1,0 +1,14 @@
+{
+  "footman-move": [
+    0,
+    200
+  ],
+  "archer-move": [
+    250,
+    150
+  ],
+  "knight-move": [
+    450,
+    250
+  ]
+}
