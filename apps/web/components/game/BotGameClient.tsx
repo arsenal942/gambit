@@ -2,7 +2,6 @@
 
 import { useBotGameState, type BotGameConfig } from "@/hooks/useBotGameState";
 import { useBoardInteraction } from "@/hooks/useBoardInteraction";
-import { useGameSounds } from "@/hooks/useGameSounds";
 import { GameBoard } from "./GameBoard";
 import { TurnIndicator } from "./TurnIndicator";
 import { CheckAlert } from "./CheckAlert";
@@ -28,9 +27,6 @@ export function BotGameClient({ config, onBack }: BotGameClientProps) {
     onTileClick,
     onPushDirectionClick,
   } = useBoardInteraction(botGame.gameState, botGame.legalMoves, botGame.dispatch);
-
-  // Sound effects — play from player perspective
-  useGameSounds(botGame.gameState, { playerColor: config.playerColor });
 
   const flipBoard = config.playerColor === "black";
   const isMyTurn = botGame.gameState.turn === config.playerColor;

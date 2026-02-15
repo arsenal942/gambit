@@ -2,7 +2,6 @@
 
 import { useGameState } from "@/hooks/useGameState";
 import { useBoardInteraction } from "@/hooks/useBoardInteraction";
-import { useGameSounds } from "@/hooks/useGameSounds";
 import { GameBoard } from "./GameBoard";
 import { TurnIndicator } from "./TurnIndicator";
 import { CheckAlert } from "./CheckAlert";
@@ -33,9 +32,6 @@ export function GameClient() {
     onPushDirectionClick,
     clearSelection,
   } = useBoardInteraction(gameState, legalMoves, dispatch);
-
-  // Sound effects — local hotseat, no player color
-  useGameSounds(gameState);
 
   const lastMoveHighlight = lastMove
     ? { from: lastMove.from, to: lastMove.to }

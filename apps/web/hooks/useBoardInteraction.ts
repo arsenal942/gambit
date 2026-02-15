@@ -9,7 +9,6 @@ import {
   type PieceActions,
 } from "@gambit/engine";
 import type { TileHighlight } from "@/components/game/ActionDots";
-import { soundManager } from "@/lib/sound-manager";
 
 type InteractionMode =
   | { type: "idle" }
@@ -110,7 +109,6 @@ export function useBoardInteraction(
           clickedPiece.player === gameState.turn &&
           legalMoves.some((pm) => pm.piece.id === clickedPiece.id)
         ) {
-          soundManager.play("select");
           setInteraction({ type: "pieceSelected", pieceId: clickedPiece.id });
         }
         return;
@@ -119,7 +117,6 @@ export function useBoardInteraction(
       // In pushbackTarget mode
       if (interaction.type === "pushbackTarget") {
         // Clicking elsewhere cancels pushback
-        soundManager.play("deselect");
         setInteraction({ type: "idle" });
         return;
       }
@@ -134,7 +131,6 @@ export function useBoardInteraction(
 
         // Click the same piece → deselect
         if (clickedPiece && clickedPiece.id === interaction.pieceId) {
-          soundManager.play("deselect");
           setInteraction({ type: "idle" });
           return;
         }
@@ -145,7 +141,6 @@ export function useBoardInteraction(
           clickedPiece.player === gameState.turn &&
           legalMoves.some((pm) => pm.piece.id === clickedPiece.id)
         ) {
-          soundManager.play("select");
           setInteraction({ type: "pieceSelected", pieceId: clickedPiece.id });
           return;
         }
@@ -211,7 +206,6 @@ export function useBoardInteraction(
         }
 
         // Click elsewhere → deselect
-        soundManager.play("deselect");
         setInteraction({ type: "idle" });
       }
     },
