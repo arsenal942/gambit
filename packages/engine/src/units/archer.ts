@@ -42,7 +42,7 @@ function offsetPosition(pos: Position, rowDelta: number, colDelta: number): Posi
 /**
  * Returns all legal movement positions for an Archer.
  *
- * Behind or At River: 2 tiles forward, backward, or sideways (orthogonal, sliding) — OR 1 tile diagonally
+ * Behind or At River: up to 2 tiles forward, backward, or sideways (orthogonal, sliding) — OR 1 tile diagonally
  * Beyond River: 1 tile in any direction (orthogonal or diagonal — like a king in chess)
  *
  * Archers CANNOT capture by moving — they cannot land on any occupied tile.
@@ -54,13 +54,17 @@ export function getArcherMoves(piece: Piece, gameState: GameState): Position[] {
   const moves: Position[] = [];
 
   if (riverStatus === "behind" || riverStatus === "at") {
-    // 2 tiles in any orthogonal direction (sliding — intermediate must be empty)
+    // Up to 2 tiles in any orthogonal direction (sliding — intermediate must be empty to reach 2)
     for (const [dr, dc] of ORTHOGONAL_DIRS) {
       const intermediate = offsetPosition(position, dr, dc);
       if (!intermediate || !isValidPosition(intermediate)) continue;
       const intOccupant = getPieceAt(board, intermediate);
-      if (intOccupant) continue; // blocked — cannot jump over pieces
+      if (intOccupant) continue; // blocked — cannot move here or slide past
 
+      // 1 tile is valid
+      moves.push(intermediate);
+
+      // 2 tiles if the destination is also empty
       const target = offsetPosition(position, dr * 2, dc * 2);
       if (!target || !isValidPosition(target)) continue;
       const occupant = getPieceAt(board, target);
@@ -96,7 +100,8 @@ export function getArcherMoves(piece: Piece, gameState: GameState): Position[] {
  * Longshot is a ranged capture — the Archer fires through a screen piece and moves to the target position.
  *
  * Forward Longshot: up to 3 tiles directly forward.
- * Backward/Sideways Longshot: up to 2 tiles directly behind or sideways.
+ * Sideways Longshot: up to 2 tiles directly left or right.
+ * Backward Longshot: not allowed.
  *
  * Rules:
  * - Only orthogonal directions (no diagonal)
@@ -120,9 +125,10 @@ export function getArcherLongshots(
   }[] = [];
 
   // Define directions with their maximum longshot range
+  // Archers can only longshot forward (up to 3 tiles) and sideways (up to 2 tiles).
+  // Backward longshot is not allowed.
   const directionConfigs: { dir: Direction; maxRange: number }[] = [
     { dir: [fwd, 0], maxRange: 3 },   // forward
-    { dir: [-fwd, 0], maxRange: 2 },   // backward
     { dir: [0, -1], maxRange: 2 },     // left
     { dir: [0, 1], maxRange: 2 },      // right
   ];

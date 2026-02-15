@@ -711,8 +711,8 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
     expect(targetD2).toBeUndefined();
   });
 
-  it("3.6 Longshot backward and sideways (max 2 tiles)", () => {
-    // Backward longshot at distance 2
+  it("3.6 Longshot backward not allowed, sideways (max 2 tiles)", () => {
+    // Backward longshot at distance 2 — should NOT be allowed
     const state = createCustomGame([
       { type: "archer", player: "white", position: pos("D", 5), id: "wa" },
       { type: "footman", player: "white", position: pos("C", 5), id: "wf" },
@@ -722,21 +722,8 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
 
     const wa = getPieceAt(state.board, pos("D", 5))!;
     const longshots = getArcherLongshots(wa, state);
-    // Backward for white = toward A. D→B = 2 tiles backward. Screen at C (dist 1).
-    expect(longshots.find((ls) => posEq(ls.targetPosition, pos("B", 5)))).toBeDefined();
-
-    // Backward at distance 3 — should be blocked (max backward = 2)
-    const state2 = createCustomGame([
-      { type: "archer", player: "white", position: pos("E", 5), id: "wa" },
-      { type: "footman", player: "white", position: pos("D", 5), id: "wf" },
-      { type: "footman", player: "black", position: pos("B", 5), id: "bf" },
-      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
-    ]);
-
-    const wa2 = getPieceAt(state2.board, pos("E", 5))!;
-    const longshots2 = getArcherLongshots(wa2, state2);
-    // E→B = 3 tiles backward. Max backward = 2. Should NOT be available.
-    expect(longshots2.find((ls) => posEq(ls.targetPosition, pos("B", 5)))).toBeUndefined();
+    // Backward for white = toward A. D→B = 2 tiles backward. Backward longshot is not allowed.
+    expect(longshots.find((ls) => posEq(ls.targetPosition, pos("B", 5)))).toBeUndefined();
 
     // Sideways longshot at distance 2
     const state3 = createCustomGame([
@@ -792,9 +779,10 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
     ]);
     const waBehind = getPieceAt(stateBehind.board, pos("D", 5))!;
     const movesBehind = getArcherMoves(waBehind, stateBehind);
+    // 1-tile orthogonal: E5, C5, D4, D6 (4 directions)
     // 2-tile orthogonal: F5, B5, D3, D7 (4 directions)
     // 1-tile diagonal: E6, E4, C6, C4 (4 directions)
-    expect(movesBehind).toHaveLength(8);
+    expect(movesBehind).toHaveLength(12);
     expect(includesPos(movesBehind, pos("F", 5))).toBe(true); // 2 forward
     expect(includesPos(movesBehind, pos("B", 5))).toBe(true); // 2 backward
 
@@ -2320,8 +2308,8 @@ describe("Group 13: River Boundary Precision", () => {
     ]);
     const waE = getPieceAt(stateE.board, pos("E", 5))!;
     const movesE = getArcherMoves(waE, stateE);
-    // 2 orthogonal: C5, G5, E3, E7. Diagonal 1: D4, D6, F4, F6. Total 8.
-    expect(movesE).toHaveLength(8);
+    // 1 orthogonal: D5, F5, E4, E6. 2 orthogonal: C5, G5, E3, E7. Diagonal 1: D4, D6, F4, F6. Total 12.
+    expect(movesE).toHaveLength(12);
     expect(includesPos(movesE, pos("C", 5))).toBe(true); // 2 up
     expect(includesPos(movesE, pos("G", 5))).toBe(true); // 2 down
 
