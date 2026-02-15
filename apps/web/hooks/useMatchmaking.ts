@@ -6,7 +6,6 @@ import type { QueueMatchedPayload } from "@gambit/shared";
 import { getSocket, disconnectSocket, type GameSocket } from "@/lib/socket";
 import { setPlayerToken, setPlayerColor } from "@/lib/player-token";
 import { createClient } from "@/lib/supabase/client";
-import { soundManager } from "@/lib/sound-manager";
 
 export type MatchmakingStatus = "idle" | "searching" | "matched";
 
@@ -52,7 +51,6 @@ export function useMatchmaking(): MatchmakingState {
       // Store player token and color for the matched game
       setPlayerToken(payload.gameId, payload.playerToken);
       setPlayerColor(payload.gameId, payload.color);
-      soundManager.play("match-found");
     });
 
     socket.on("connect_error", () => {
