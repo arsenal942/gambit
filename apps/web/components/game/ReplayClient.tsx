@@ -4,6 +4,7 @@ import type { Move } from "@gambit/engine";
 import { GameBoard } from "./GameBoard";
 import { CapturedPiecesTray } from "./CapturedPiecesTray";
 import { useReplayState } from "@/hooks/useReplayState";
+import { useReplaySounds } from "@/hooks/useReplaySounds";
 
 interface ReplayClientProps {
   moves: unknown[];
@@ -28,6 +29,11 @@ export function ReplayClient({ moves }: ReplayClientProps) {
   } = useReplayState(typedMoves);
 
   const { state } = currentFrame;
+
+  // Play sounds during replay (debounced for scrubbing)
+  const currentMoveForSound =
+    currentFrame.moveIndex !== null ? typedMoves[currentFrame.moveIndex] ?? null : null;
+  useReplaySounds(currentIndex, currentMoveForSound, isPlaying);
 
   // Build last move highlight from current frame's state
   const lastMove =

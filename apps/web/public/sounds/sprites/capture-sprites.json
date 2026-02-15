@@ -1,0 +1,14 @@
+{
+  "footman-capture": [
+    0,
+    250
+  ],
+  "knight-capture": [
+    300,
+    300
+  ],
+  "pushback": [
+    650,
+    200
+  ]
+}
