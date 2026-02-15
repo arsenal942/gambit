@@ -779,9 +779,10 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
     ]);
     const waBehind = getPieceAt(stateBehind.board, pos("D", 5))!;
     const movesBehind = getArcherMoves(waBehind, stateBehind);
+    // 1-tile orthogonal: E5, C5, D4, D6 (4 directions)
     // 2-tile orthogonal: F5, B5, D3, D7 (4 directions)
     // 1-tile diagonal: E6, E4, C6, C4 (4 directions)
-    expect(movesBehind).toHaveLength(8);
+    expect(movesBehind).toHaveLength(12);
     expect(includesPos(movesBehind, pos("F", 5))).toBe(true); // 2 forward
     expect(includesPos(movesBehind, pos("B", 5))).toBe(true); // 2 backward
 
@@ -2307,8 +2308,8 @@ describe("Group 13: River Boundary Precision", () => {
     ]);
     const waE = getPieceAt(stateE.board, pos("E", 5))!;
     const movesE = getArcherMoves(waE, stateE);
-    // 2 orthogonal: C5, G5, E3, E7. Diagonal 1: D4, D6, F4, F6. Total 8.
-    expect(movesE).toHaveLength(8);
+    // 1 orthogonal: D5, F5, E4, E6. 2 orthogonal: C5, G5, E3, E7. Diagonal 1: D4, D6, F4, F6. Total 12.
+    expect(movesE).toHaveLength(12);
     expect(includesPos(movesE, pos("C", 5))).toBe(true); // 2 up
     expect(includesPos(movesE, pos("G", 5))).toBe(true); // 2 down
 

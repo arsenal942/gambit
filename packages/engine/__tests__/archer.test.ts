@@ -143,8 +143,8 @@ describe("getArcherMoves", () => {
     });
   });
 
-  describe("behind river: cannot move 1 tile orthogonally", () => {
-    it("white archer on D5 cannot move just 1 tile orthogonally", () => {
+  describe("behind river: can also move 1 tile orthogonally", () => {
+    it("white archer on D5 can move 1 tile orthogonally", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
@@ -153,15 +153,15 @@ describe("getArcherMoves", () => {
       const state = makeState({ board });
       const moves = getArcherMoves(piece, state);
 
-      expect(includesPos(moves, { col: 5, row: "E" })).toBe(false);  // 1 forward
-      expect(includesPos(moves, { col: 5, row: "C" })).toBe(false);  // 1 backward
-      expect(includesPos(moves, { col: 4, row: "D" })).toBe(false);  // 1 left
-      expect(includesPos(moves, { col: 6, row: "D" })).toBe(false);  // 1 right
+      expect(includesPos(moves, { col: 5, row: "E" })).toBe(true);  // 1 forward
+      expect(includesPos(moves, { col: 5, row: "C" })).toBe(true);  // 1 backward
+      expect(includesPos(moves, { col: 4, row: "D" })).toBe(true);  // 1 left
+      expect(includesPos(moves, { col: 6, row: "D" })).toBe(true);  // 1 right
     });
   });
 
   describe("behind river: total move count on open board", () => {
-    it("white archer on D5 has exactly 8 moves (4 orthogonal-2 + 4 diagonal-1)", () => {
+    it("white archer on D5 has exactly 12 moves (4 orthogonal-1 + 4 orthogonal-2 + 4 diagonal-1)", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
@@ -170,12 +170,12 @@ describe("getArcherMoves", () => {
       const state = makeState({ board });
       const moves = getArcherMoves(piece, state);
 
-      expect(moves).toHaveLength(8);
+      expect(moves).toHaveLength(12);
     });
   });
 
   describe("at river: same as behind river", () => {
-    it("white archer on F5 (at river) can move 2 orthogonal and 1 diagonal", () => {
+    it("white archer on F5 (at river) can move 1-2 orthogonal and 1 diagonal", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
@@ -183,6 +183,12 @@ describe("getArcherMoves", () => {
       }));
       const state = makeState({ board });
       const moves = getArcherMoves(piece, state);
+
+      // 1 tile orthogonal
+      expect(includesPos(moves, { col: 5, row: "G" })).toBe(true);  // 1 forward
+      expect(includesPos(moves, { col: 5, row: "E" })).toBe(true);  // 1 backward
+      expect(includesPos(moves, { col: 4, row: "F" })).toBe(true);  // 1 left
+      expect(includesPos(moves, { col: 6, row: "F" })).toBe(true);  // 1 right
 
       // 2 tiles orthogonal
       expect(includesPos(moves, { col: 5, row: "H" })).toBe(true);  // 2 forward
@@ -196,10 +202,10 @@ describe("getArcherMoves", () => {
       expect(includesPos(moves, { col: 4, row: "G" })).toBe(true);
       expect(includesPos(moves, { col: 6, row: "G" })).toBe(true);
 
-      expect(moves).toHaveLength(8);
+      expect(moves).toHaveLength(12);
     });
 
-    it("black archer on F5 (at river) can move 2 orthogonal and 1 diagonal", () => {
+    it("black archer on F5 (at river) can move 1-2 orthogonal and 1 diagonal", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "black",
@@ -208,13 +214,17 @@ describe("getArcherMoves", () => {
       const state = makeState({ board });
       const moves = getArcherMoves(piece, state);
 
-      // 2 forward (toward A): F→D
-      expect(includesPos(moves, { col: 5, row: "D" })).toBe(true);
-      // 2 backward (toward K): F→H
-      expect(includesPos(moves, { col: 5, row: "H" })).toBe(true);
-      // 2 left, 2 right
-      expect(includesPos(moves, { col: 3, row: "F" })).toBe(true);
-      expect(includesPos(moves, { col: 7, row: "F" })).toBe(true);
+      // 1 tile orthogonal
+      expect(includesPos(moves, { col: 5, row: "E" })).toBe(true);  // 1 forward (toward A)
+      expect(includesPos(moves, { col: 5, row: "G" })).toBe(true);  // 1 backward (toward K)
+      expect(includesPos(moves, { col: 4, row: "F" })).toBe(true);  // 1 left
+      expect(includesPos(moves, { col: 6, row: "F" })).toBe(true);  // 1 right
+
+      // 2 tiles orthogonal
+      expect(includesPos(moves, { col: 5, row: "D" })).toBe(true);  // 2 forward (toward A)
+      expect(includesPos(moves, { col: 5, row: "H" })).toBe(true);  // 2 backward (toward K)
+      expect(includesPos(moves, { col: 3, row: "F" })).toBe(true);  // 2 left
+      expect(includesPos(moves, { col: 7, row: "F" })).toBe(true);  // 2 right
 
       // 1 tile diagonals
       expect(includesPos(moves, { col: 4, row: "E" })).toBe(true);
@@ -222,7 +232,7 @@ describe("getArcherMoves", () => {
       expect(includesPos(moves, { col: 4, row: "G" })).toBe(true);
       expect(includesPos(moves, { col: 6, row: "G" })).toBe(true);
 
-      expect(moves).toHaveLength(8);
+      expect(moves).toHaveLength(12);
     });
   });
 
@@ -493,16 +503,19 @@ describe("getArcherMoves", () => {
       const state = makeState({ board });
       const moves = getArcherMoves(piece, state);
 
+      // 1 forward: A→B col 1 ✓
+      expect(includesPos(moves, { col: 1, row: "B" })).toBe(true);
       // 2 forward: A→C col 1 ✓
       expect(includesPos(moves, { col: 1, row: "C" })).toBe(true);
+      // 1 right: col 1→2 ✓
+      expect(includesPos(moves, { col: 2, row: "A" })).toBe(true);
       // 2 right: col 1→3 ✓
       expect(includesPos(moves, { col: 3, row: "A" })).toBe(true);
-      // 2 backward: off board
-      // 2 left: off board
+      // backward/left: off board
       // 1 diagonal down-right: B2 ✓
       expect(includesPos(moves, { col: 2, row: "B" })).toBe(true);
       // Other diagonals: off board
-      expect(moves).toHaveLength(3);
+      expect(moves).toHaveLength(5);
     });
 
     it("white archer on K10 (corner, beyond river): limited moves", () => {
@@ -566,12 +579,23 @@ describe("getArcherMoves", () => {
       const state = makeState({ board });
       const moves = getArcherMoves(piece, state);
 
-      // 2 backward from A: off board
+      // backward from A: off board
+      // 1 forward: A→B ✓
+      expect(includesPos(moves, { col: 5, row: "B" })).toBe(true);
       // 2 forward: A→C ✓
       expect(includesPos(moves, { col: 5, row: "C" })).toBe(true);
+      // 1 left: col 5→4 ✓
+      expect(includesPos(moves, { col: 4, row: "A" })).toBe(true);
+      // 2 left: col 5→3 ✓
+      expect(includesPos(moves, { col: 3, row: "A" })).toBe(true);
+      // 1 right: col 5→6 ✓
+      expect(includesPos(moves, { col: 6, row: "A" })).toBe(true);
+      // 2 right: col 5→7 ✓
+      expect(includesPos(moves, { col: 7, row: "A" })).toBe(true);
       // 1 diagonal: only downward diagonals available
       expect(includesPos(moves, { col: 4, row: "B" })).toBe(true);
       expect(includesPos(moves, { col: 6, row: "B" })).toBe(true);
+      expect(moves).toHaveLength(8);
     });
   });
 });

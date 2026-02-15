@@ -42,7 +42,7 @@ function offsetPosition(pos: Position, rowDelta: number, colDelta: number): Posi
 /**
  * Returns all legal movement positions for an Archer.
  *
- * Behind or At River: 2 tiles forward, backward, or sideways (orthogonal, sliding) — OR 1 tile diagonally
+ * Behind or At River: up to 2 tiles forward, backward, or sideways (orthogonal, sliding) — OR 1 tile diagonally
  * Beyond River: 1 tile in any direction (orthogonal or diagonal — like a king in chess)
  *
  * Archers CANNOT capture by moving — they cannot land on any occupied tile.
@@ -54,13 +54,17 @@ export function getArcherMoves(piece: Piece, gameState: GameState): Position[] {
   const moves: Position[] = [];
 
   if (riverStatus === "behind" || riverStatus === "at") {
-    // 2 tiles in any orthogonal direction (sliding — intermediate must be empty)
+    // Up to 2 tiles in any orthogonal direction (sliding — intermediate must be empty to reach 2)
     for (const [dr, dc] of ORTHOGONAL_DIRS) {
       const intermediate = offsetPosition(position, dr, dc);
       if (!intermediate || !isValidPosition(intermediate)) continue;
       const intOccupant = getPieceAt(board, intermediate);
-      if (intOccupant) continue; // blocked — cannot jump over pieces
+      if (intOccupant) continue; // blocked — cannot move here or slide past
 
+      // 1 tile is valid
+      moves.push(intermediate);
+
+      // 2 tiles if the destination is also empty
       const target = offsetPosition(position, dr * 2, dc * 2);
       if (!target || !isValidPosition(target)) continue;
       const occupant = getPieceAt(board, target);
