@@ -96,7 +96,8 @@ export function getArcherMoves(piece: Piece, gameState: GameState): Position[] {
  * Longshot is a ranged capture — the Archer fires through a screen piece and moves to the target position.
  *
  * Forward Longshot: up to 3 tiles directly forward.
- * Backward/Sideways Longshot: up to 2 tiles directly behind or sideways.
+ * Sideways Longshot: up to 2 tiles directly left or right.
+ * Backward Longshot: not allowed.
  *
  * Rules:
  * - Only orthogonal directions (no diagonal)
@@ -120,9 +121,10 @@ export function getArcherLongshots(
   }[] = [];
 
   // Define directions with their maximum longshot range
+  // Archers can only longshot forward (up to 3 tiles) and sideways (up to 2 tiles).
+  // Backward longshot is not allowed.
   const directionConfigs: { dir: Direction; maxRange: number }[] = [
     { dir: [fwd, 0], maxRange: 3 },   // forward
-    { dir: [-fwd, 0], maxRange: 2 },   // backward
     { dir: [0, -1], maxRange: 2 },     // left
     { dir: [0, 1], maxRange: 2 },      // right
   ];

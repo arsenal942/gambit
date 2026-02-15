@@ -730,22 +730,22 @@ describe("getArcherLongshots", () => {
     });
   });
 
-  describe("backward longshot at distance 2 with 1 screen", () => {
-    it("white archer longshots enemy 2 tiles backward", () => {
+  describe("backward longshot is not allowed", () => {
+    it("white archer cannot longshot enemy 2 tiles backward", () => {
       const board = createEmptyBoard();
       const archer = placePiece(board, makePiece({
         player: "white",
         position: { col: 5, row: "E" },
       }));
       // Screen at D5 (1 tile backward for white)
-      const screen = placePiece(board, makePiece({
+      placePiece(board, makePiece({
         id: "screen",
         player: "white",
         type: "footman",
         position: { col: 5, row: "D" },
       }));
       // Target at C5 (2 tiles backward for white)
-      const target = placePiece(board, makePiece({
+      placePiece(board, makePiece({
         id: "target",
         player: "black",
         type: "footman",
@@ -755,9 +755,34 @@ describe("getArcherLongshots", () => {
       const longshots = getArcherLongshots(archer, state);
 
       const backwardShot = longshots.find((l) => l.targetPosition.row === "C" && l.targetPosition.col === 5);
-      expect(backwardShot).toBeDefined();
-      expect(backwardShot!.targetPiece.id).toBe("target");
-      expect(backwardShot!.screenPiece.id).toBe("screen");
+      expect(backwardShot).toBeUndefined();
+    });
+
+    it("black archer cannot longshot enemy 2 tiles backward (toward K)", () => {
+      const board = createEmptyBoard();
+      const archer = placePiece(board, makePiece({
+        player: "black",
+        position: { col: 5, row: "G" },
+      }));
+      // Screen at H5 (1 tile backward for black, toward K)
+      placePiece(board, makePiece({
+        id: "screen",
+        player: "black",
+        type: "footman",
+        position: { col: 5, row: "H" },
+      }));
+      // Target at I5 (2 tiles backward for black)
+      placePiece(board, makePiece({
+        id: "target",
+        player: "white",
+        type: "footman",
+        position: { col: 5, row: "I" },
+      }));
+      const state = makeState({ board });
+      const longshots = getArcherLongshots(archer, state);
+
+      const backwardShot = longshots.find((l) => l.targetPosition.row === "I" && l.targetPosition.col === 5);
+      expect(backwardShot).toBeUndefined();
     });
   });
 
@@ -819,34 +844,7 @@ describe("getArcherLongshots", () => {
     });
   });
 
-  describe("cannot backward/sideways longshot at distance 3+", () => {
-    it("backward longshot at distance 3 is out of range", () => {
-      const board = createEmptyBoard();
-      const archer = placePiece(board, makePiece({
-        player: "white",
-        position: { col: 5, row: "F" },
-      }));
-      // Screen at E5 (1 backward)
-      placePiece(board, makePiece({
-        id: "screen",
-        player: "white",
-        type: "footman",
-        position: { col: 5, row: "E" },
-      }));
-      // Target at C5 (3 tiles backward) — out of range for backward
-      placePiece(board, makePiece({
-        id: "target",
-        player: "black",
-        type: "footman",
-        position: { col: 5, row: "C" },
-      }));
-      const state = makeState({ board });
-      const longshots = getArcherLongshots(archer, state);
-
-      // Should have backward shot to D5? No — D5 is empty, C5 is at distance 3
-      expect(longshots.some((l) => l.targetPosition.row === "C" && l.targetPosition.col === 5)).toBe(false);
-    });
-
+  describe("cannot sideways longshot at distance 3+", () => {
     it("sideways longshot at distance 3 is out of range", () => {
       const board = createEmptyBoard();
       const archer = placePiece(board, makePiece({
@@ -911,8 +909,7 @@ describe("getArcherLongshots", () => {
       expect(dist3Shot).toBeUndefined();
     });
 
-    it("backward longshot at distance 2 blocked by 0 pieces (no screen)", () => {
-      // This actually tests "no screen" — covered below, but verifying here too
+    it("backward longshot at distance 2 is not allowed even with no screen", () => {
       const board = createEmptyBoard();
       const archer = placePiece(board, makePiece({
         player: "white",

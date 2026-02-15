@@ -480,7 +480,7 @@ const lesson4: TutorialLesson = {
         "Behind the River: Archers slide 2 tiles orthogonally or 1 tile diagonally",
         "Beyond the River: only 1 tile in any direction",
         "Longshot: ranged capture through exactly 1 screen piece",
-        "Forward range: 3 tiles. Sideways/backward: 2 tiles",
+        "Forward range: 3 tiles. Sideways: 2 tiles. No backward longshot",
         "The Archer moves to the target's position after firing",
       ],
     },

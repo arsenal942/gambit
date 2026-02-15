@@ -711,8 +711,8 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
     expect(targetD2).toBeUndefined();
   });
 
-  it("3.6 Longshot backward and sideways (max 2 tiles)", () => {
-    // Backward longshot at distance 2
+  it("3.6 Longshot backward not allowed, sideways (max 2 tiles)", () => {
+    // Backward longshot at distance 2 — should NOT be allowed
     const state = createCustomGame([
       { type: "archer", player: "white", position: pos("D", 5), id: "wa" },
       { type: "footman", player: "white", position: pos("C", 5), id: "wf" },
@@ -722,21 +722,8 @@ describe("Group 3: Archer Mechanics Deep Dive", () => {
 
     const wa = getPieceAt(state.board, pos("D", 5))!;
     const longshots = getArcherLongshots(wa, state);
-    // Backward for white = toward A. D→B = 2 tiles backward. Screen at C (dist 1).
-    expect(longshots.find((ls) => posEq(ls.targetPosition, pos("B", 5)))).toBeDefined();
-
-    // Backward at distance 3 — should be blocked (max backward = 2)
-    const state2 = createCustomGame([
-      { type: "archer", player: "white", position: pos("E", 5), id: "wa" },
-      { type: "footman", player: "white", position: pos("D", 5), id: "wf" },
-      { type: "footman", player: "black", position: pos("B", 5), id: "bf" },
-      { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
-    ]);
-
-    const wa2 = getPieceAt(state2.board, pos("E", 5))!;
-    const longshots2 = getArcherLongshots(wa2, state2);
-    // E→B = 3 tiles backward. Max backward = 2. Should NOT be available.
-    expect(longshots2.find((ls) => posEq(ls.targetPosition, pos("B", 5)))).toBeUndefined();
+    // Backward for white = toward A. D→B = 2 tiles backward. Backward longshot is not allowed.
+    expect(longshots.find((ls) => posEq(ls.targetPosition, pos("B", 5)))).toBeUndefined();
 
     // Sideways longshot at distance 2
     const state3 = createCustomGame([
