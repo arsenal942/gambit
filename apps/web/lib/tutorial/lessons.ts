@@ -289,7 +289,7 @@ const lesson3: TutorialLesson = {
       id: "l3-intro",
       type: "observe",
       coachText:
-        "Footmen have a special ability: Pushback! Instead of moving, a Footman next to an enemy can PUSH that enemy 1 tile in any direction — without moving itself.",
+        "Footmen have a special ability: Pushback! Instead of moving, a Footman next to an enemy can PUSH that enemy 1 tile directly away — without moving itself.",
       boardSetup: {
         pieces: [
           footman("w-f-1", "white", 4, "F"),
@@ -303,7 +303,7 @@ const lesson3: TutorialLesson = {
       id: "l3-push-1",
       type: "interact",
       coachText:
-        "Click your Footman. See the orange ring on the enemy? Click it, then choose a direction to push!",
+        "Click your Footman. See the orange ring on the enemy? Click it to push the enemy away!",
       boardSetup: {
         pieces: [
           footman("w-f-1", "white", 4, "F"),
@@ -315,7 +315,7 @@ const lesson3: TutorialLesson = {
       successText:
         "Notice your Footman didn't move — Pushback keeps you in place while displacing the enemy!",
       hints: [
-        { delayMs: 6000, text: "Click your Footman, then the orange ring on the enemy, then pick a direction arrow." },
+        { delayMs: 6000, text: "Click your Footman, then the orange ring on the enemy to push them away." },
       ],
       allowedPieceIds: ["w-f-1"],
     },
@@ -323,7 +323,7 @@ const lesson3: TutorialLesson = {
       id: "l3-blocked-intro",
       type: "observe",
       coachText:
-        "You can't push a piece into another piece or off the board. Here, some push directions are blocked by the black Archer behind the target.",
+        "The enemy is always pushed in the direction away from your Footman. If there's a piece behind the enemy or the push would go off the board, the push is blocked entirely.",
       boardSetup: {
         pieces: [
           footman("w-f-1", "white", 4, "F"),
@@ -338,12 +338,11 @@ const lesson3: TutorialLesson = {
       id: "l3-push-2",
       type: "interact",
       coachText:
-        "Push the enemy again — notice you have fewer direction options this time.",
+        "Now try pushing from a different angle! Your Footman pushes the enemy directly away.",
       boardSetup: {
         pieces: [
-          footman("w-f-1", "white", 4, "F"),
+          footman("w-f-1", "white", 5, "E"),
           footman("b-f-1", "black", 5, "F"),
-          archer("b-a-1", "black", 6, "F"),
         ],
         turn: "white",
       },
@@ -356,9 +355,9 @@ const lesson3: TutorialLesson = {
       type: "complete",
       coachText: "Footman Pushback Mastered!",
       summaryPoints: [
-        "Pushback shoves an adjacent enemy 1 tile — your Footman stays put",
+        "Pushback shoves an adjacent enemy 1 tile away from your Footman — your Footman stays put",
         "The push doesn't capture — it just displaces the enemy",
-        "Can't push into another piece or off the board",
+        "Can't push if a piece is behind the enemy or the push goes off the board",
         "Powerful for controlling Capture Points and disrupting enemy formations",
       ],
     },

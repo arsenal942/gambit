@@ -233,21 +233,19 @@ export function getFootmanPushbacks(
       continue;
     }
 
-    // Try pushing in all 4 orthogonal directions
-    for (const [pushDr, pushDc] of ORTHOGONAL_DIRS) {
-      const pushTarget = offsetPosition(adjacentPos, pushDr, pushDc);
-      if (!pushTarget) continue;
-      if (!isValidPosition(pushTarget)) continue;
+    // Push direction is the same as from the footman to the enemy (away from the footman)
+    const pushTarget = offsetPosition(adjacentPos, dr, dc);
+    if (!pushTarget) continue;
+    if (!isValidPosition(pushTarget)) continue;
 
-      const pushTargetOccupant = getPieceAt(board, pushTarget);
-      if (pushTargetOccupant) continue; // blocked by any piece
+    const pushTargetOccupant = getPieceAt(board, pushTarget);
+    if (pushTargetOccupant) continue; // blocked by any piece
 
-      pushbacks.push({
-        targetPiece: adjacentPiece,
-        pushDirection: [pushDr, pushDc],
-        resultingPosition: pushTarget,
-      });
-    }
+    pushbacks.push({
+      targetPiece: adjacentPiece,
+      pushDirection: [dr, dc],
+      resultingPosition: pushTarget,
+    });
   }
 
   return pushbacks;
