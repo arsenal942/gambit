@@ -611,8 +611,8 @@ describe("getFootmanCaptures", () => {
 // ─── PUSHBACK ───────────────────────────────────────────────────────────────
 
 describe("getFootmanPushbacks", () => {
-  describe("basic push in each direction", () => {
-    it("can push adjacent enemy in all 4 orthogonal directions", () => {
+  describe("push in direction away from footman", () => {
+    it("pushes enemy forward when footman is behind it", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
@@ -628,18 +628,12 @@ describe("getFootmanPushbacks", () => {
       const state = makeState({ board });
       const pushbacks = getFootmanPushbacks(piece, state);
 
-      // Enemy is adjacent (forward). Can push in 4 directions (wherever destination is empty + on board).
-      // Push up: F5 → E5 (occupied by our footman) — blocked
-      // Push down: F5 → G5 — valid
-      // Push left: F5 → F4 — valid
-      // Push right: F5 → F6 — valid
-      expect(pushbacks).toHaveLength(3);
-      expect(pushbacks.some((p) => p.resultingPosition.row === "G" && p.resultingPosition.col === 5)).toBe(true);
-      expect(pushbacks.some((p) => p.resultingPosition.row === "F" && p.resultingPosition.col === 4)).toBe(true);
-      expect(pushbacks.some((p) => p.resultingPosition.row === "F" && p.resultingPosition.col === 6)).toBe(true);
+      // Enemy is forward (toward K). Push continues in that direction: F5 → G5
+      expect(pushbacks).toHaveLength(1);
+      expect(pushbacks[0].resultingPosition).toEqual({ col: 5, row: "G" });
     });
 
-    it("can push enemy that is to the left", () => {
+    it("pushes enemy further left when footman is to the right", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
@@ -655,8 +649,51 @@ describe("getFootmanPushbacks", () => {
       const state = makeState({ board });
       const pushbacks = getFootmanPushbacks(piece, state);
 
-      // Enemy at D4, push directions: up(C4), down(E4), left(D3), right(D5=our piece blocked)
-      expect(pushbacks).toHaveLength(3);
+      // Enemy is to the left. Push continues left: D4 → D3
+      expect(pushbacks).toHaveLength(1);
+      expect(pushbacks[0].resultingPosition).toEqual({ col: 3, row: "D" });
+    });
+
+    it("pushes enemy further right when footman is to the left", () => {
+      const board = createEmptyBoard();
+      const piece = placePiece(board, makePiece({
+        player: "white",
+        position: { col: 5, row: "D" },
+        hasMoved: true,
+      }));
+      const enemy = placePiece(board, makePiece({
+        id: "enemy",
+        player: "black",
+        position: { col: 6, row: "D" },
+        hasMoved: true,
+      }));
+      const state = makeState({ board });
+      const pushbacks = getFootmanPushbacks(piece, state);
+
+      // Enemy is to the right. Push continues right: D6 → D7
+      expect(pushbacks).toHaveLength(1);
+      expect(pushbacks[0].resultingPosition).toEqual({ col: 7, row: "D" });
+    });
+
+    it("pushes enemy backward when footman is in front of it", () => {
+      const board = createEmptyBoard();
+      const piece = placePiece(board, makePiece({
+        player: "white",
+        position: { col: 5, row: "F" },
+        hasMoved: true,
+      }));
+      const enemy = placePiece(board, makePiece({
+        id: "enemy",
+        player: "black",
+        position: { col: 5, row: "E" },
+        hasMoved: true,
+      }));
+      const state = makeState({ board });
+      const pushbacks = getFootmanPushbacks(piece, state);
+
+      // Footman is in front (toward K), enemy is behind. Push continues backward: E5 → D5
+      expect(pushbacks).toHaveLength(1);
+      expect(pushbacks[0].resultingPosition).toEqual({ col: 5, row: "D" });
     });
   });
 
@@ -709,10 +746,30 @@ describe("getFootmanPushbacks", () => {
       const state = makeState({ board });
       const pushbacks = getFootmanPushbacks(piece, state);
 
-      // Enemy at A1. Push up = off board. Push left = off board.
-      // Push down = B1 (valid). Push right = A2 (our piece, blocked).
+      // Enemy at A1 is to the left of the footman at A2.
+      // Push direction is left: A1 → A0 (off board). Not allowed.
+      expect(pushbacks).toHaveLength(0);
+    });
+
+    it("can push when not at board edge", () => {
+      const board = createEmptyBoard();
+      const piece = placePiece(board, makePiece({
+        player: "white",
+        position: { col: 3, row: "A" },
+        hasMoved: true,
+      }));
+      const enemy = placePiece(board, makePiece({
+        id: "enemy",
+        player: "black",
+        position: { col: 2, row: "A" },
+        hasMoved: true,
+      }));
+      const state = makeState({ board });
+      const pushbacks = getFootmanPushbacks(piece, state);
+
+      // Enemy at A2 is to the left. Push direction is left: A2 → A1 (valid).
       expect(pushbacks).toHaveLength(1);
-      expect(pushbacks[0].resultingPosition).toEqual({ col: 1, row: "B" });
+      expect(pushbacks[0].resultingPosition).toEqual({ col: 1, row: "A" });
     });
   });
 

@@ -476,16 +476,15 @@ describe("Group 2: Footman Mechanics Deep Dive", () => {
   });
 
   it("2.3 Pushback chain — onto capture point", () => {
-    // WF at E5, BF at F5, BA at G5 (blocking forward push repeat)
+    // WF at F6, BF at F5, push direction is [0,-1] (left), pushes BF to F4 (capture point!)
     let state = createCustomGame([
-      { type: "footman", player: "white", position: pos("E", 5), id: "wf" },
+      { type: "footman", player: "white", position: pos("F", 6), id: "wf" },
       { type: "footman", player: "black", position: pos("F", 5), id: "bf" },
-      { type: "archer", player: "black", position: pos("G", 5), id: "ba" },
       { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
       { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
     ]);
 
-    // White pushes BF from F5 to F4 (sideways, direction [0,-1])
+    // White pushes BF from F5 to F4 (direction [0,-1], away from WF at F6)
     state = executeMove(state, {
       type: "pushback",
       pieceId: "wf",
@@ -504,17 +503,13 @@ describe("Group 2: Footman Mechanics Deep Dive", () => {
       to: pos("K", 9),
     });
 
-    // White pushes BF from F4 to F3 (continue pushing sideways)
-    // WF at E5 is adjacent to BF at F4? E5 and F4: row E→F = [1,0], col 5→4 = [0,-1]
-    // That's diagonal, not orthogonal. So WF is NOT adjacent to BF at F4.
-    // Need to move WF to be adjacent. Let's move WF forward to F5 instead.
+    // Move WF from F6 to F5 to be adjacent to BF at F4 again
     state = executeMove(state, {
       type: "move",
       pieceId: "wf",
       to: pos("F", 5),
     });
 
-    // Now WF at F5 is adjacent to BF at F4 (same row, col 5→4 = [0,-1])
     // Black moves
     state = executeMove(state, {
       type: "move",
@@ -522,7 +517,7 @@ describe("Group 2: Footman Mechanics Deep Dive", () => {
       to: pos("K", 10),
     });
 
-    // White pushes BF from F4 to F3
+    // White pushes BF from F4 to F3 (direction [0,-1], away from WF at F5)
     state = executeMove(state, {
       type: "pushback",
       pieceId: "wf",
@@ -536,28 +531,29 @@ describe("Group 2: Footman Mechanics Deep Dive", () => {
   });
 
   it("2.4 Pushback — edge cases (blocked and allowed)", () => {
-    // WF at E5, BF at E6. Various blocking around E6.
+    // Push direction is always away from the footman (1 direction per adjacent enemy).
+    // WF at E6, BF1 at E7 (push [0,1] to E8, blocked by BA), BF2 at F6 (push [1,0] to G6, open)
     const state = createCustomGame([
-      { type: "footman", player: "white", position: pos("E", 5), id: "wf" },
-      { type: "footman", player: "black", position: pos("E", 6), id: "bf" },
-      { type: "archer", player: "black", position: pos("E", 7), id: "ba" }, // blocks push right
+      { type: "footman", player: "white", position: pos("E", 6), id: "wf" },
+      { type: "footman", player: "black", position: pos("E", 7), id: "bf1" },
+      { type: "archer", player: "black", position: pos("E", 8), id: "ba" }, // blocks bf1 push
+      { type: "footman", player: "black", position: pos("F", 6), id: "bf2" },
       { type: "footman", player: "white", position: pos("A", 1), id: "wd" },
       { type: "footman", player: "black", position: pos("K", 10), id: "bd" },
     ]);
 
-    const wf = getPieceAt(state.board, pos("E", 5))!;
+    const wf = getPieceAt(state.board, pos("E", 6))!;
     const pushbacks = getFootmanPushbacks(wf, state);
-    const pushesOnBf = pushbacks.filter((pb) => pb.targetPiece.id === "bf");
 
-    // BF at E6 can be pushed:
-    // [1,0] → F6: empty ✓
-    // [-1,0] → D6: empty ✓
-    // [0,1] → E7: occupied by BA ✗
-    // [0,-1] → E5: that's WF's position, occupied ✗
-    expect(pushesOnBf).toHaveLength(2);
-    const dirs = pushesOnBf.map((p) => p.pushDirection);
-    expect(dirs).toContainEqual([1, 0]);
-    expect(dirs).toContainEqual([-1, 0]);
+    // BF1 at E7: push direction [0,1] → E8 occupied by BA → blocked
+    const pushesOnBf1 = pushbacks.filter((pb) => pb.targetPiece.id === "bf1");
+    expect(pushesOnBf1).toHaveLength(0);
+
+    // BF2 at F6: push direction [1,0] → G6 empty → allowed
+    const pushesOnBf2 = pushbacks.filter((pb) => pb.targetPiece.id === "bf2");
+    expect(pushesOnBf2).toHaveLength(1);
+    expect(pushesOnBf2[0].pushDirection).toEqual([1, 0]);
+    expect(pushesOnBf2[0].resultingPosition).toEqual(pos("G", 6));
   });
 
   it("2.5 Pushback sets hasMoved on pushed piece", () => {
@@ -1713,19 +1709,16 @@ describe("Group 9: Full Game Simulations", () => {
     state = executeMove(state, { type: "move", pieceId: "black-footman-18", to: pos("F", 6) });
     assertStateIntegrity(state, 30);
 
-    // Turn 7: White captures black footman at F6 (diagonal from F5→G6? No, F5→F6 is sideways.)
-    // Actually F5 at river, forward diagonal = G4 and G6. G6 has black-footman-18? No, 18 moved to F6.
-    // So capture F5→F6 is not diagonal. Let me think...
-    // White footman at F5, black footman at F6 — adjacent orthogonally.
-    // This is a PUSHBACK opportunity, not a capture.
+    // Turn 7: White footman at F5, black footman at F6 — adjacent orthogonally (same row, col 5→6).
+    // Push direction is [0,1] (away from F5 toward F6), pushing to F7.
     state = executeMove(state, {
       type: "pushback",
       pieceId: "white-footman-13",
       targetPieceId: "black-footman-18",
-      pushDirection: [1, 0] as [number, number], // push to G6
+      pushDirection: [0, 1] as [number, number], // push to F7
     });
     assertStateIntegrity(state, 30);
-    expect(getPieceAt(state.board, pos("G", 6))?.id).toBe("black-footman-18");
+    expect(getPieceAt(state.board, pos("F", 7))?.id).toBe("black-footman-18");
 
     // Turn 8: Black develops archer
     state = executeMove(state, { type: "move", pieceId: "black-archer-23", to: pos("H", 5) });
@@ -3091,45 +3084,31 @@ describe("Group 19: First-Move Double-Step Edge Cases", () => {
 
 describe("Group 20: Endgame Stress Tests", () => {
   it("20.1 1v1 footman pushback cycle → draw after 20 half-turns", () => {
+    // WF at E5, BF at F5. Push direction [1,0] (away from WF), pushes BF to G5.
+    // BF moves back from G5 to F5 (1 tile forward for black = toward A). Repeat.
     let state = createCustomGame([
-      { type: "footman", player: "white", position: pos("F", 5), id: "wf" },
-      { type: "footman", player: "black", position: pos("F", 6), id: "bf" },
+      { type: "footman", player: "white", position: pos("E", 5), id: "wf" },
+      { type: "footman", player: "black", position: pos("F", 5), id: "bf" },
     ]);
 
-    // Play 20 half-turns of push/move-back cycle
+    // Each cycle = 2 half-turns: white pushes BF to G5, black moves BF back to F5
     for (let i = 0; i < 10; i++) {
-      // White pushes bf from current position to +1 row
-      const bfPos = getPieceAt(state.board, pos("F", 6)) ? pos("F", 6) : pos("G", 6);
-      const bfPiece = getPieceAt(state.board, bfPos);
-      if (bfPiece && bfPiece.id === "bf") {
-        // Push bf forward (toward K)
-        state = executeMove(state, {
-          type: "pushback",
-          pieceId: "wf",
-          targetPieceId: "bf",
-          pushDirection: [1, 0] as [number, number],
-        });
-      } else {
-        // wf just moves sideways if can't push
-        state = executeMove(state, { type: "move", pieceId: "wf", to: pos("F", 4) });
-      }
+      // White pushes BF from F5 to G5 (direction [1,0])
+      state = executeMove(state, {
+        type: "pushback",
+        pieceId: "wf",
+        targetPieceId: "bf",
+        pushDirection: [1, 0] as [number, number],
+      });
+      expect(getPieceAt(state.board, pos("G", 5))?.id).toBe("bf");
 
-      // Black: move bf back (or sideways) — find bf and move it
-      // For simplicity, just do a simple move
-      const allPieces: Piece[] = [];
-      for (let r = 0; r < 11; r++) {
-        for (let c = 0; c < 10; c++) {
-          const p = state.board[r][c];
-          if (p && p.id === "bf") allPieces.push(p);
-        }
-      }
-      if (allPieces.length > 0) {
-        const bf = allPieces[0];
-        const bfMoves = getFootmanMoves(bf, state);
-        if (bfMoves.length > 0) {
-          state = executeMove(state, { type: "move", pieceId: "bf", to: bfMoves[0] });
-        }
-      }
+      // Black moves BF from G5 back to F5 (1 tile forward for black)
+      state = executeMove(state, {
+        type: "move",
+        pieceId: "bf",
+        to: pos("F", 5),
+      });
+      expect(getPieceAt(state.board, pos("F", 5))?.id).toBe("bf");
     }
 
     expect(state.turnsSinceCapture).toBeGreaterThanOrEqual(20);
