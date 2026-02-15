@@ -113,9 +113,11 @@ class SoundManager {
   private currentMusicId: number | null = null;
   private audioUnlocked = false;
   private listeners: Set<() => void> = new Set();
+  private snapshotCache: SoundPreferences;
 
   constructor() {
     this.preferences = this.loadPreferences();
+    this.snapshotCache = { ...this.preferences };
   }
 
   // --- Initialization ---
@@ -292,7 +294,7 @@ class SoundManager {
   }
 
   getPreferences(): SoundPreferences {
-    return { ...this.preferences };
+    return this.snapshotCache;
   }
 
   isInitialized(): boolean {
@@ -313,6 +315,7 @@ class SoundManager {
   }
 
   private notifyListeners(): void {
+    this.snapshotCache = { ...this.preferences };
     for (const listener of this.listeners) {
       listener();
     }
