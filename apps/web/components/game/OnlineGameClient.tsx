@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useBoardInteraction } from "@/hooks/useBoardInteraction";
+import { useGameSounds, playGameStartSound, playDrawOfferSound, playErrorSound } from "@/hooks/useGameSounds";
 import type { OnlineGameState } from "@/hooks/useOnlineGameState";
 import type { GameState } from "@gambit/engine";
 import { GameBoard } from "./GameBoard";
@@ -81,6 +83,36 @@ export function OnlineGameClient({
     legalMoves,
     dispatch,
   );
+
+  // Sound effects — play from player's perspective
+  useGameSounds(gameState, { playerColor });
+
+  // Play game-start sound when the game transitions to "playing"
+  const prevPhaseRef = useRef(onlinePhase);
+  useEffect(() => {
+    if (onlinePhase === "playing" && prevPhaseRef.current !== "playing") {
+      playGameStartSound();
+    }
+    prevPhaseRef.current = onlinePhase;
+  }, [onlinePhase]);
+
+  // Play draw-offer sound when an opponent offers a draw
+  const prevDrawRef = useRef(drawOffer.pending);
+  useEffect(() => {
+    if (drawOffer.pending && !prevDrawRef.current && !drawOffer.isOurs) {
+      playDrawOfferSound();
+    }
+    prevDrawRef.current = drawOffer.pending;
+  }, [drawOffer]);
+
+  // Play error sound when a move is rejected
+  const prevErrorRef = useRef(error);
+  useEffect(() => {
+    if (error && error !== prevErrorRef.current) {
+      playErrorSound();
+    }
+    prevErrorRef.current = error;
+  }, [error]);
 
   const flipBoard = playerColor === "black";
 
