@@ -80,10 +80,8 @@ function FeatureBlock({
 function RiverVisual() {
   return (
     <svg
-      width="240"
-      height="160"
       viewBox="0 0 240 160"
-      className="drop-shadow-lg"
+      className="w-full max-w-[240px] drop-shadow-lg"
     >
       {/* Board tiles above river */}
       {[0, 1, 2, 3, 4, 5].map((col) => (
@@ -163,10 +161,8 @@ function RiverVisual() {
 function CapturePointVisual() {
   return (
     <svg
-      width="240"
-      height="80"
       viewBox="0 0 240 80"
-      className="drop-shadow-lg"
+      className="w-full max-w-[240px] drop-shadow-lg"
     >
       {/* River background */}
       <rect x={0} y={0} width={240} height={80} rx={8} fill="#3D7A7A" opacity={0.5} />
@@ -215,7 +211,7 @@ function VictoryPathsVisual() {
   ];
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-wrap justify-center gap-6">
       {paths.map((path) => (
         <div key={path.label} className="flex flex-col items-center gap-2">
           <div

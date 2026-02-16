@@ -65,15 +65,15 @@ export function LeaderboardClient({ entries }: LeaderboardClientProps) {
           {search ? "No players found." : "No rated players yet."}
         </p>
       ) : (
-        <div className="overflow-hidden rounded-xl bg-gray-800">
+        <div className="overflow-x-auto rounded-xl bg-gray-800">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-700 text-left text-xs text-gray-400">
-                <th className="px-4 py-3">Rank</th>
-                <th className="px-4 py-3">Player</th>
-                <th className="px-4 py-3 text-right">Rating</th>
-                <th className="px-4 py-3 text-right">Games</th>
-                <th className="px-4 py-3 text-right">Win Rate</th>
+                <th className="px-2 py-3 sm:px-4">Rank</th>
+                <th className="px-2 py-3 sm:px-4">Player</th>
+                <th className="px-2 py-3 text-right sm:px-4">Rating</th>
+                <th className="px-2 py-3 text-right sm:px-4">Games</th>
+                <th className="px-2 py-3 text-right sm:px-4">Win Rate</th>
               </tr>
             </thead>
             <tbody>
@@ -97,8 +97,8 @@ export function LeaderboardClient({ entries }: LeaderboardClientProps) {
                         : "hover:bg-gray-700/50"
                     }`}
                   >
-                    <td className="px-4 py-3 text-gray-400">#{rank}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-3 text-gray-400 sm:px-4">#{rank}</td>
+                    <td className="px-2 py-3 sm:px-4">
                       <Link
                         href={`/profile/${entry.profiles.username}`}
                         className="text-gray-200 hover:text-amber-200"
@@ -111,16 +111,16 @@ export function LeaderboardClient({ entries }: LeaderboardClientProps) {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-amber-100">
+                    <td className="whitespace-nowrap px-2 py-3 text-right font-mono text-amber-100 sm:px-4">
                       {Math.round(entry.rating)}
                       <span className="ml-1 text-xs text-gray-500">
                         ±{Math.round(entry.rd)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-400">
+                    <td className="px-2 py-3 text-right text-gray-400 sm:px-4">
                       {entry.games_played}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-400">
+                    <td className="px-2 py-3 text-right text-gray-400 sm:px-4">
                       {winRate}%
                     </td>
                   </tr>

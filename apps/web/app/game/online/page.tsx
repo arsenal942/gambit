@@ -126,14 +126,14 @@ export default function OnlineLobbyPage() {
           </h2>
 
           {!showPrivate ? (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 onClick={() => setShowPrivate(true)}
-                className={`${btnBase} flex-1 bg-gray-700 text-gray-200 hover:bg-gray-600`}
+                className={`${btnBase} w-full bg-gray-700 text-gray-200 hover:bg-gray-600 sm:flex-1`}
               >
                 Create Game
               </button>
-              <div className="flex flex-1 gap-2">
+              <div className="flex w-full gap-2 sm:flex-1">
                 <input
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.trim())}
@@ -142,7 +142,7 @@ export default function OnlineLobbyPage() {
                       privateGame.joinGame(joinCode);
                   }}
                   placeholder="Game code"
-                  className="flex-1 rounded-lg bg-gray-700 px-3 py-2.5 text-sm text-gray-200 placeholder-gray-500 outline-none ring-1 ring-gray-600 focus:ring-amber-500"
+                  className="min-w-0 flex-1 rounded-lg bg-gray-700 px-3 py-2.5 text-sm text-gray-200 placeholder-gray-500 outline-none ring-1 ring-gray-600 focus:ring-amber-500"
                 />
                 <button
                   onClick={() => privateGame.joinGame(joinCode)}

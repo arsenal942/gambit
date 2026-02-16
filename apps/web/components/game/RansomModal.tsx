@@ -49,7 +49,7 @@ export function RansomModal({ gameState, dispatch }: RansomModalProps) {
     // Step 2: Choose placement position
     return (
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70">
-        <div className="max-h-[80vh] w-80 overflow-y-auto rounded-xl bg-gray-800 p-6 shadow-2xl">
+        <div className="mx-4 max-h-[80vh] w-full max-w-80 overflow-y-auto rounded-xl bg-gray-800 p-6 shadow-2xl">
           <h3 className="text-lg font-bold text-amber-100">
             Place {selectedPiece.type}
           </h3>
@@ -87,7 +87,7 @@ export function RansomModal({ gameState, dispatch }: RansomModalProps) {
   // Step 1: Choose a captured piece to ransom
   return (
     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70">
-      <div className="w-80 rounded-xl bg-gray-800 p-6 shadow-2xl">
+      <div className="mx-4 w-full max-w-80 rounded-xl bg-gray-800 p-6 shadow-2xl">
         <h3 className="text-lg font-bold text-amber-100">Ransom</h3>
         <p className="mt-1 text-xs text-gray-400">
           {playerName(gameState.turn)}'s knight captured an enemy knight.
