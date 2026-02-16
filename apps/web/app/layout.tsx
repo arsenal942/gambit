@@ -5,8 +5,22 @@ import { Header } from "@/components/layout/Header";
 import { SoundInit } from "@/components/SoundInit";
 
 export const metadata: Metadata = {
-  title: "Gambit",
-  description: "A tactical strategy board game",
+  title: "Gambit — Free Tactical Strategy Board Game",
+  description:
+    "A free browser-based tactical board game with three unique units, a river that changes abilities, and capture point victory. No download required.",
+  openGraph: {
+    title: "Gambit — Free Tactical Strategy Board Game",
+    description:
+      "Three units. One river. Infinite strategy. Play free in your browser.",
+    type: "website",
+    siteName: "Gambit",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Gambit — Free Tactical Strategy Board Game",
+    description:
+      "Three units. One river. Infinite strategy. Play free in your browser.",
+  },
 };
 
 export default function RootLayout({
