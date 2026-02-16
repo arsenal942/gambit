@@ -63,9 +63,9 @@ export default async function ReplayPage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-amber-100">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-bold text-amber-100">
             {whiteUsername} vs {blackUsername}
           </h1>
           <p className="text-sm text-gray-400">
@@ -83,7 +83,7 @@ export default async function ReplayPage({
         </div>
         <Link
           href="/"
-          className="text-sm text-gray-500 transition-colors hover:text-gray-300"
+          className="shrink-0 text-sm text-gray-500 transition-colors hover:text-gray-300"
         >
           Back to Home
         </Link>

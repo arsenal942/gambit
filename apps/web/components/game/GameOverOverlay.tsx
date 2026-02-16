@@ -51,7 +51,7 @@ export function GameOverOverlay({
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70">
-      <div className="rounded-xl bg-gray-800 p-8 text-center shadow-2xl">
+      <div className="mx-4 rounded-xl bg-gray-800 p-6 text-center shadow-2xl sm:p-8">
         <h2 className="text-3xl font-bold text-amber-100">{title}</h2>
         <p className="mt-2 text-gray-400">{subtitle}</p>
         {myRating && (

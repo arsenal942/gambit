@@ -43,9 +43,47 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
   );
 }
 
+function HamburgerIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 export function Header() {
   const { user, profile, loading, signOut, isConfigured } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [soundSettingsOpen, setSoundSettingsOpen] = useState(false);
   const { preferences, toggleEnabled } = useSoundPreferences();
 
@@ -53,7 +91,7 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-[#1a1a2e]/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          {/* Left: Logo + Nav */}
+          {/* Left: Logo + Nav (desktop) */}
           <div className="flex items-center gap-6">
             <Link
               href="/"
@@ -61,7 +99,7 @@ export function Header() {
             >
               Gambit
             </Link>
-            <nav className="flex items-center gap-4">
+            <nav className="hidden items-center gap-4 sm:flex">
               <Link
                 href="/tutorial"
                 className="text-sm text-gray-400 transition-colors hover:text-gray-200"
@@ -83,9 +121,9 @@ export function Header() {
             </nav>
           </div>
 
-          {/* Right: Sound + Auth */}
+          {/* Right: Sound + Auth (desktop) + Hamburger (mobile) */}
           <div className="flex items-center gap-2">
-            {/* Sound toggle — click to mute/unmute, long-press or right-click for settings */}
+            {/* Sound toggle */}
             <button
               onClick={toggleEnabled}
               onContextMenu={(e) => {
@@ -103,10 +141,10 @@ export function Header() {
               <SpeakerIcon muted={!preferences.enabled} />
             </button>
 
-            {/* Sound settings gear icon */}
+            {/* Sound settings gear icon — desktop only */}
             <button
               onClick={() => setSoundSettingsOpen(true)}
-              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200"
+              className="hidden rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200 sm:block"
               title="Sound settings"
               aria-label="Sound settings"
             >
@@ -125,76 +163,185 @@ export function Header() {
               </svg>
             </button>
 
-            {!isConfigured ? null : loading ? (
-              <div className="h-8 w-16 animate-pulse rounded bg-gray-800" />
-            ) : user && profile ? (
-              <div className="relative">
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-200 transition-colors hover:bg-gray-800"
-                >
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-700 text-xs font-bold text-white">
-                    {profile.username[0].toUpperCase()}
-                  </span>
-                  <span>{profile.username}</span>
-                  {profile.rating !== null && (
-                    <span className="text-xs text-amber-400">
-                      {Math.round(profile.rating)}
+            {/* Desktop auth */}
+            <div className="hidden sm:block">
+              {!isConfigured ? null : loading ? (
+                <div className="h-8 w-16 animate-pulse rounded bg-gray-800" />
+              ) : user && profile ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-200 transition-colors hover:bg-gray-800"
+                  >
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-700 text-xs font-bold text-white">
+                      {profile.username[0].toUpperCase()}
                     </span>
-                  )}
-                </button>
-                {menuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 z-50 mt-1 w-44 rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-lg">
-                      <Link
-                        href={`/profile/${profile.username}`}
+                    <span className="max-w-[120px] truncate">{profile.username}</span>
+                    {profile.rating !== null && (
+                      <span className="text-xs text-amber-400">
+                        {Math.round(profile.rating)}
+                      </span>
+                    )}
+                  </button>
+                  {menuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
                         onClick={() => setMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
-                      >
-                        Profile
-                      </Link>
-                      <button
-                        onClick={async () => {
-                          setMenuOpen(false);
-                          await signOut();
-                        }}
-                        className="block w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-gray-700"
-                      >
-                        Sign Out
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : user && !profile ? (
-              <Link
-                href="/auth/profile-setup"
-                className="rounded-lg bg-amber-700 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
-              >
-                Complete Setup
-              </Link>
-            ) : (
-              <div className="flex items-center gap-3">
+                      />
+                      <div className="absolute right-0 z-50 mt-1 w-44 rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-lg">
+                        <Link
+                          href={`/profile/${profile.username}`}
+                          onClick={() => setMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+                        >
+                          Profile
+                        </Link>
+                        <button
+                          onClick={async () => {
+                            setMenuOpen(false);
+                            await signOut();
+                          }}
+                          className="block w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-gray-700"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : user && !profile ? (
                 <Link
-                  href="/auth/sign-in"
-                  className="px-3 py-1.5 text-sm font-medium text-gray-300 transition-colors hover:text-white"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/auth/sign-up"
+                  href="/auth/profile-setup"
                   className="rounded-lg bg-amber-700 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
                 >
-                  Sign Up
+                  Complete Setup
                 </Link>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/auth/sign-in"
+                    className="px-3 py-1.5 text-sm font-medium text-gray-300 transition-colors hover:text-white"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/sign-up"
+                    className="rounded-lg bg-amber-700 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile hamburger button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200 sm:hidden"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="border-t border-gray-800 sm:hidden">
+            <nav className="flex flex-col px-4 py-3">
+              <Link
+                href="/tutorial"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-800"
+              >
+                Learn
+              </Link>
+              <Link
+                href="/game/online"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-800"
+              >
+                Play
+              </Link>
+              <Link
+                href="/leaderboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-800"
+              >
+                Leaderboard
+              </Link>
+
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setSoundSettingsOpen(true);
+                }}
+                className="rounded-lg px-3 py-2.5 text-left text-sm text-gray-300 transition-colors hover:bg-gray-800"
+              >
+                Sound Settings
+              </button>
+
+              <div className="my-2 border-t border-gray-800" />
+
+              {!isConfigured ? null : loading ? (
+                <div className="h-8 w-16 animate-pulse rounded bg-gray-800" />
+              ) : user && profile ? (
+                <>
+                  <Link
+                    href={`/profile/${profile.username}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-800"
+                  >
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-700 text-xs font-bold text-white">
+                      {profile.username[0].toUpperCase()}
+                    </span>
+                    <span className="truncate">{profile.username}</span>
+                    {profile.rating !== null && (
+                      <span className="text-xs text-amber-400">
+                        {Math.round(profile.rating)}
+                      </span>
+                    )}
+                  </Link>
+                  <button
+                    onClick={async () => {
+                      setMobileMenuOpen(false);
+                      await signOut();
+                    }}
+                    className="rounded-lg px-3 py-2.5 text-left text-sm text-gray-300 transition-colors hover:bg-gray-800"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : user && !profile ? (
+                <Link
+                  href="/auth/profile-setup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg px-3 py-2.5 text-sm font-semibold text-amber-400 transition-colors hover:bg-gray-800"
+                >
+                  Complete Setup
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/sign-in"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-800"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/sign-up"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm font-semibold text-amber-400 transition-colors hover:bg-gray-800"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Sound settings modal */}

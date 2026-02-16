@@ -60,7 +60,7 @@ export function ReplayClient({ moves }: ReplayClientProps) {
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
       {/* Board + Controls */}
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex w-full max-w-[640px] flex-col items-center gap-4">
         <GameBoard
           board={state.board}
           selectedPieceId={null}

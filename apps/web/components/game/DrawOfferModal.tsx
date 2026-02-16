@@ -8,7 +8,7 @@ interface DrawOfferModalProps {
 export function DrawOfferModal({ onAccept, onDecline }: DrawOfferModalProps) {
   return (
     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70">
-      <div className="w-72 rounded-xl bg-gray-800 p-6 text-center shadow-2xl">
+      <div className="mx-4 w-full max-w-72 rounded-xl bg-gray-800 p-6 text-center shadow-2xl">
         <h3 className="text-lg font-bold text-amber-100">Draw Offered</h3>
         <p className="mt-2 text-sm text-gray-400">
           Your opponent offers a draw.
