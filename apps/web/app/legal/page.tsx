@@ -225,10 +225,10 @@ export default function LegalPage() {
           If you have any questions about these Terms of Service, please contact
           us at{" "}
           <a
-            href="mailto:contact@snowkeystudios.com"
+            href="mailto:infosnowkeystudios.com"
             className="text-amber-400 transition-colors hover:text-amber-300"
           >
-            contact@snowkeystudios.com
+            info@snowkeystudios.com
           </a>{" "}
           or visit{" "}
           <a
@@ -545,10 +545,10 @@ export default function LegalPage() {
           <li>
             <strong className="text-gray-300">Email:</strong>{" "}
             <a
-              href="mailto:contact@snowkeystudios.com"
+              href="mailto:infosnowkeystudios.com"
               className="text-amber-400 transition-colors hover:text-amber-300"
             >
-              contact@snowkeystudios.com
+              info@snowkeystudios.com
             </a>
           </li>
           <li>
