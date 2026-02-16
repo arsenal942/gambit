@@ -63,6 +63,12 @@ export function LandingFooter() {
             >
               Blackheart Kickstarter
             </a>
+            <Link
+              href="/legal"
+              className="text-sm text-gray-500 transition-colors hover:text-gray-300"
+            >
+              Terms &amp; Privacy
+            </Link>
           </nav>
         </div>
       </div>
@@ -70,7 +76,13 @@ export function LandingFooter() {
       <div className="mx-auto mt-8 max-w-5xl border-t border-gray-800 pt-6">
         <p className="text-center text-xs text-gray-600">
           &copy; {new Date().getFullYear()} Snowkey Studios. All rights
-          reserved.
+          reserved. &middot;{" "}
+          <Link
+            href="/legal"
+            className="text-gray-600 transition-colors hover:text-gray-400"
+          >
+            Terms &amp; Privacy
+          </Link>
         </p>
       </div>
     </footer>

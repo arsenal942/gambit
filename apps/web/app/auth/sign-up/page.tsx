@@ -44,6 +44,24 @@ export default function SignUpPage() {
 
         <AuthForm mode="signup" />
 
+        <p className="mt-4 text-center text-xs text-gray-500">
+          By creating an account, you agree to our{" "}
+          <Link
+            href="/legal#terms"
+            className="text-amber-400 transition-colors hover:text-amber-300"
+          >
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/legal#privacy"
+            className="text-amber-400 transition-colors hover:text-amber-300"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
+
         <p className="mt-6 text-center text-sm text-gray-400">
           Already have an account?{" "}
           <Link
