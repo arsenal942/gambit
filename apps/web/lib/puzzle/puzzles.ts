@@ -33,286 +33,351 @@ function knight(
 }
 
 // ═══════════════════════════════════════════════════════════════
-// BEGINNER (1–8) — Single-move puzzles in realistic positions
+// BEGINNER (1–8) — Learn to think ahead
 // ═══════════════════════════════════════════════════════════════
 
 export const PUZZLES: Puzzle[] = [
-  // ── 1: River Skirmish ────────────────────────────────────────
-  // Mid-game river battle. w-f-1 at E6 captures forward diag to F7.
-  // Distractor: w-f-2 at E3 could capture b-f-2 at F4 (capture point),
-  // but the objective targets the archer.
+  // ── 1: Shove and Seize ──────────────────────────────────────
+  // 2-move: Push enemy off capture point F7, then advance onto it.
+  // Teaches pushback as a strategic tool for CP control.
   {
     id: 1,
-    title: "River Skirmish",
-    objective: "White to capture the archer",
-    difficulty: "beginner",
-    category: "capture",
-    hint: "Your Footman at E6 can capture diagonally forward — look right.",
-    boardSetup: {
-      pieces: [
-        footman("w-f-1", "white", 6, "E"),
-        footman("w-f-2", "white", 3, "E"),
-        footman("w-f-3", "white", 1, "F"),
-        archer("w-a-1", "white", 5, "C"),
-        knight("w-k-1", "white", 8, "B"),
-        archer("b-a-1", "black", 7, "F"),  // TARGET
-        footman("b-f-1", "black", 4, "F"),
-        footman("b-f-2", "black", 5, "G"),
-        knight("b-k-1", "black", 3, "H"),
-        archer("b-a-2", "black", 7, "I"),
-      ],
-      turn: "white",
-      capturePoints: { F1: "white", F4: "black", F7: null, F10: null },
-    },
-    solution: [{
-      // E6 forward diag right = F7 (b-a-1)
-      playerMoves: [
-        { type: "capture", pieceId: "w-f-1", to: { col: 7, row: "F" } },
-      ],
-    }],
-  },
-
-  // ── 2: Behind the Lines ──────────────────────────────────────
-  // White footman is beyond the river. Beyond river = all 4 diag captures.
-  // b-k-1 at H6 is reachable by forward diag from G5. b-f-1 at F6 also
-  // capturable (backward diag) but objective says "knight".
-  {
-    id: 2,
-    title: "Behind the Lines",
-    objective: "White to capture the knight",
-    difficulty: "beginner",
-    category: "capture",
-    hint: "Beyond the River, Footmen capture in all four diagonal directions.",
-    boardSetup: {
-      pieces: [
-        footman("w-f-1", "white", 5, "G"),  // beyond river
-        footman("w-f-2", "white", 4, "F"),
-        footman("w-f-3", "white", 1, "F"),
-        archer("w-a-1", "white", 3, "D"),
-        knight("w-k-1", "white", 7, "C"),
-        knight("b-k-1", "black", 6, "H"),   // TARGET (forward diag from G5)
-        footman("b-f-1", "black", 6, "F"),   // distractor (backward diag from G5)
-        footman("b-f-2", "black", 3, "G"),
-        archer("b-a-1", "black", 8, "I"),
-        footman("b-f-3", "black", 10, "F"),
-      ],
-      turn: "white",
-      capturePoints: { F1: "white", F4: "white", F7: null, F10: "black" },
-    },
-    solution: [{
-      // G5 forward diag right = H6 (b-k-1)
-      playerMoves: [
-        { type: "capture", pieceId: "w-f-1", to: { col: 6, row: "H" } },
-      ],
-    }],
-  },
-
-  // ── 3: Leg Cut Trap ──────────────────────────────────────────
-  // Knight at D5 looks like it can capture at F6, but w-f-1 at E5 blocks
-  // the leg (first step of down-2 path). Instead, w-f-1 at E5 itself can
-  // capture forward diagonal to F6.
-  {
-    id: 3,
-    title: "Leg Cut Trap",
-    objective: "White to capture the archer",
-    difficulty: "beginner",
-    category: "capture",
-    hint: "The Knight is blocked — look for another piece that can reach the target.",
-    boardSetup: {
-      pieces: [
-        knight("w-k-1", "white", 5, "D"),
-        footman("w-f-1", "white", 5, "E"),  // blocks knight leg AND can capture
-        footman("w-f-2", "white", 4, "F"),
-        archer("w-a-1", "white", 8, "C"),
-        footman("w-f-3", "white", 2, "D"),
-        archer("b-a-1", "black", 6, "F"),   // TARGET
-        footman("b-f-1", "black", 7, "F"),
-        footman("b-f-2", "black", 3, "G"),
-        knight("b-k-1", "black", 9, "H"),
-        footman("b-f-3", "black", 5, "I"),
-      ],
-      turn: "white",
-      capturePoints: { F1: null, F4: "white", F7: "black", F10: null },
-    },
-    solution: [{
-      // w-f-1 at E5 captures forward diag right = F6 (b-a-1)
-      playerMoves: [
-        { type: "capture", pieceId: "w-f-1", to: { col: 6, row: "F" } },
-      ],
-    }],
-  },
-
-  // ── 4: Sniper's Nest ─────────────────────────────────────────
-  // Archer at C4 fires forward 3 tiles to F4 (capture point) through
-  // screen at D4. E4 is empty.
-  // Distractor: w-a-2 at B7 can't longshot because 2 screens block.
-  {
-    id: 4,
-    title: "Sniper's Nest",
-    objective: "White to capture with a longshot",
-    difficulty: "beginner",
-    category: "longshot",
-    hint: "Fire forward through your Footman — exactly one screen is needed.",
-    boardSetup: {
-      pieces: [
-        archer("w-a-1", "white", 4, "C"),    // can longshot to F4
-        archer("w-a-2", "white", 7, "B"),    // blocked (2 screens)
-        footman("w-f-1", "white", 4, "D"),   // screen for w-a-1
-        footman("w-f-2", "white", 7, "C"),   // screen 1 for w-a-2
-        knight("w-k-1", "white", 2, "E"),
-        footman("b-f-1", "black", 4, "F"),   // TARGET (on capture point F4)
-        footman("b-f-2", "black", 7, "D"),   // screen 2 for w-a-2 → blocks longshot
-        footman("b-f-3", "black", 6, "G"),
-        archer("b-a-1", "black", 8, "H"),
-        knight("b-k-1", "black", 3, "I"),
-      ],
-      turn: "white",
-      capturePoints: { F1: null, F4: "black", F7: null, F10: null },
-    },
-    solution: [{
-      // C4 → F4 (dist 3 forward). Screen at D4. E4 empty. Target at F4 (enemy).
-      playerMoves: [
-        { type: "longshot", pieceId: "w-a-1", targetPosition: { col: 4, row: "F" } },
-      ],
-    }],
-  },
-
-  // ── 5: Double Barrel ──────────────────────────────────────────
-  // Two archers. w-a-1 at D3 can longshot to F3 (dist 2, screen at E3).
-  // w-a-2 at C7 is blocked (D7 and E7 both occupied = 2 screens).
-  {
-    id: 5,
-    title: "Double Barrel",
-    objective: "White to capture with a longshot",
-    difficulty: "beginner",
-    category: "longshot",
-    hint: "One archer has a clear line — the other is blocked by too many pieces.",
-    boardSetup: {
-      pieces: [
-        archer("w-a-1", "white", 3, "D"),    // valid longshot to F3
-        archer("w-a-2", "white", 7, "C"),    // blocked (2 screens)
-        footman("w-f-1", "white", 3, "E"),   // screen for w-a-1
-        footman("w-f-2", "white", 7, "D"),   // screen 1 for w-a-2
-        knight("w-k-1", "white", 5, "B"),
-        knight("b-k-1", "black", 3, "F"),    // TARGET for w-a-1
-        footman("b-f-1", "black", 7, "E"),   // screen 2 for w-a-2
-        footman("b-f-2", "black", 7, "F"),   // would-be target for w-a-2
-        archer("b-a-1", "black", 5, "H"),
-        footman("b-f-3", "black", 9, "I"),
-      ],
-      turn: "white",
-    },
-    solution: [{
-      // D3 → F3 (dist 2 forward). Screen at E3 (w-f-1). Target at F3 (b-k-1).
-      playerMoves: [
-        { type: "longshot", pieceId: "w-a-1", targetPosition: { col: 3, row: "F" } },
-      ],
-    }],
-  },
-
-  // ── 6: Flanking Fire ──────────────────────────────────────────
-  // Archer at E5 has forward blocked (2 screens at F5 and G5).
-  // Sideways right to E7 (dist 2, screen at E6) works.
-  {
-    id: 6,
-    title: "Flanking Fire",
-    objective: "White to capture with a longshot",
-    difficulty: "beginner",
-    category: "longshot",
-    hint: "The forward line is blocked — try firing sideways through your screen.",
-    boardSetup: {
-      pieces: [
-        archer("w-a-1", "white", 5, "E"),
-        footman("w-f-1", "white", 6, "E"),   // sideways screen
-        footman("w-f-2", "white", 5, "F"),   // forward blocker 1
-        footman("w-f-3", "white", 5, "G"),   // forward blocker 2 (2 screens)
-        knight("w-k-1", "white", 3, "C"),
-        archer("b-a-1", "black", 7, "E"),    // TARGET (sideways right dist 2)
-        footman("b-f-1", "black", 4, "G"),
-        knight("b-k-1", "black", 8, "H"),
-        footman("b-f-2", "black", 10, "F"),
-        footman("b-f-3", "black", 6, "I"),
-      ],
-      turn: "white",
-      capturePoints: { F1: null, F4: null, F7: null, F10: "black" },
-    },
-    solution: [{
-      // E5 sideways right → E7 (dist 2). Screen at E6 (w-f-1). Target at E7 (b-a-1).
-      playerMoves: [
-        { type: "longshot", pieceId: "w-a-1", targetPosition: { col: 7, row: "E" } },
-      ],
-    }],
-  },
-
-  // ── 7: Shield Shove ───────────────────────────────────────────
-  // Push enemy footman off capture point F4. Realistic mid-game with
-  // multiple pieces around the river.
-  {
-    id: 7,
-    title: "Shield Shove",
-    objective: "White to push the enemy off the capture point",
+    title: "Shove and Seize",
+    objective: "White to seize the capture point in 2 moves",
     difficulty: "beginner",
     category: "pushback",
-    hint: "Pushback shoves an adjacent enemy 1 tile away — push them off F4.",
+    hint: "You can't capture the enemy directly — but you can shove them off the point, then step onto it.",
     boardSetup: {
       pieces: [
-        footman("w-f-1", "white", 4, "E"),   // pusher (adjacent to F4)
+        footman("w-f-1", "white", 7, "E"),   // pusher, adjacent to F7
+        footman("w-f-2", "white", 1, "F"),   // on CP F1
+        footman("w-f-3", "white", 4, "F"),   // on CP F4
+        archer("w-a-1", "white", 5, "D"),
+        knight("w-k-1", "white", 9, "C"),
+        footman("b-f-1", "black", 7, "F"),   // sitting on CP F7 — push target
+        footman("b-f-2", "black", 3, "K"),
+        archer("b-a-1", "black", 6, "I"),
+        knight("b-k-1", "black", 8, "J"),
+        footman("b-f-3", "black", 10, "H"),
+      ],
+      turn: "white",
+      capturePoints: { F1: "white", F4: "white", F7: "black", F10: null },
+    },
+    solution: [
+      {
+        // Push b-f-1 from F7 to G7 (direction [1,0] from E7)
+        playerMoves: [{
+          type: "pushback",
+          pieceId: "w-f-1",
+          targetPieceId: "b-f-1",
+          pushDirection: [1, 0] as [number, number],
+        }],
+        opponentResponse: { type: "move", pieceId: "b-f-2", to: { col: 3, row: "J" } },
+      },
+      {
+        // Advance w-f-1 from E7 to F7 (1 tile forward)
+        playerMoves: [
+          { type: "move", pieceId: "w-f-1", to: { col: 7, row: "F" } },
+        ],
+      },
+    ],
+  },
+
+  // ── 2: Screen Assembly ──────────────────────────────────────
+  // 2-move: Move footman into position as a screen, then fire longshot.
+  // Teaches that longshots need exactly one screen — and you can create one.
+  {
+    id: 2,
+    title: "Screen Assembly",
+    objective: "White to capture the knight in 2 moves",
+    difficulty: "beginner",
+    category: "longshot",
+    hint: "Your Archer needs a screen to fire — can you move a piece into position first?",
+    boardSetup: {
+      pieces: [
+        archer("w-a-1", "white", 5, "C"),    // archer, will longshot to F5
+        footman("w-f-1", "white", 4, "D"),   // moves sideways to D5 as screen
+        knight("w-k-1", "white", 7, "B"),
         footman("w-f-2", "white", 1, "F"),
-        archer("w-a-1", "white", 6, "D"),
-        knight("w-k-1", "white", 8, "C"),
-        footman("w-f-3", "white", 3, "D"),
-        footman("b-f-1", "black", 4, "F"),   // target on capture point
+        footman("w-f-3", "white", 3, "E"),
+        knight("b-k-1", "black", 5, "F"),    // longshot target at F5
+        footman("b-f-1", "black", 7, "F"),
+        archer("b-a-1", "black", 8, "H"),
+        footman("b-f-2", "black", 6, "I"),
+        footman("b-f-3", "black", 3, "J"),
+      ],
+      turn: "white",
+    },
+    solution: [
+      {
+        // Move w-f-1 from D4 to D5 (1 tile sideways right, becomes screen)
+        playerMoves: [
+          { type: "move", pieceId: "w-f-1", to: { col: 5, row: "D" } },
+        ],
+        opponentResponse: { type: "move", pieceId: "b-f-3", to: { col: 3, row: "I" } },
+      },
+      {
+        // Longshot: C5 → F5 (dist 3 forward). Screen at D5. E5 empty. Target F5.
+        playerMoves: [
+          { type: "longshot", pieceId: "w-a-1", targetPosition: { col: 5, row: "F" } },
+        ],
+      },
+    ],
+  },
+
+  // ── 3: Push and Pounce ──────────────────────────────────────
+  // 2-move: Push enemy forward into another footman's diagonal capture range.
+  // Teaches that pushback creates capture opportunities for other pieces.
+  {
+    id: 3,
+    title: "Push and Pounce",
+    objective: "White to capture the enemy footman in 2 moves",
+    difficulty: "beginner",
+    category: "tactical",
+    hint: "You can't capture directly — but pushing the enemy might put them in range of your other piece.",
+    boardSetup: {
+      pieces: [
+        footman("w-f-1", "white", 4, "E"),   // pusher (adjacent to F4 enemy)
+        footman("w-f-2", "white", 3, "F"),   // capturer (at river, forward diag right = G4)
+        archer("w-a-1", "white", 6, "C"),
+        knight("w-k-1", "white", 8, "B"),
+        footman("w-f-3", "white", 1, "F"),
+        footman("b-f-1", "black", 4, "F"),   // push target → goes to G4
         footman("b-f-2", "black", 7, "F"),
         archer("b-a-1", "black", 5, "H"),
         knight("b-k-1", "black", 9, "I"),
-        footman("b-f-3", "black", 2, "G"),
+        footman("b-f-3", "black", 6, "J"),
       ],
       turn: "white",
       capturePoints: { F1: "white", F4: "black", F7: "black", F10: null },
     },
+    solution: [
+      {
+        // Push b-f-1 from F4 to G4 (direction [1,0] from E4)
+        playerMoves: [{
+          type: "pushback",
+          pieceId: "w-f-1",
+          targetPieceId: "b-f-1",
+          pushDirection: [1, 0] as [number, number],
+        }],
+        opponentResponse: { type: "move", pieceId: "b-f-3", to: { col: 6, row: "I" } },
+      },
+      {
+        // w-f-2 at F3 captures forward diag right = G4 (b-f-1)
+        playerMoves: [
+          { type: "capture", pieceId: "w-f-2", to: { col: 4, row: "G" } },
+        ],
+      },
+    ],
+  },
+
+  // ── 4: The Safe Capture ─────────────────────────────────────
+  // 1-move (tricky): Three footmen can each capture a different enemy,
+  // but two captures leave your piece exposed to retaliation.
+  // Only one capture is safe. Teaches evaluating consequences.
+  {
+    id: 4,
+    title: "The Safe Capture",
+    objective: "White to capture without losing a piece",
+    difficulty: "beginner",
+    category: "capture",
+    hint: "Three of your Footmen can capture — but after two of them, the enemy takes your piece right back. Which capture is truly safe?",
+    boardSetup: {
+      pieces: [
+        footman("w-f-1", "white", 6, "E"),   // captures F5 (unsafe — b-f-3 at G6 retaliates)
+        footman("w-f-2", "white", 7, "E"),   // captures F8 (unsafe — b-k-1 at H7 retaliates)
+        footman("w-f-3", "white", 2, "E"),   // captures F3 (safe!) ✓
+        archer("w-a-1", "white", 5, "C"),
+        knight("w-k-1", "white", 9, "B"),
+        archer("b-a-1", "black", 5, "F"),    // target for w-f-1 at F5 (unsafe)
+        footman("b-f-1", "black", 8, "F"),   // target for w-f-2 at F8 (unsafe)
+        footman("b-f-2", "black", 3, "F"),   // target for w-f-3 at F3 (safe) ✓
+        footman("b-f-3", "black", 6, "G"),   // threatens F5 (forward diag from G6)
+        knight("b-k-1", "black", 7, "H"),    // threatens F8 via L-shape (H7→F8)
+        footman("b-f-4", "black", 4, "I"),
+      ],
+      turn: "white",
+    },
     solution: [{
-      // Push from E4 → F4 direction [1,0], pushes b-f-1 to G4
-      playerMoves: [{
-        type: "pushback",
-        pieceId: "w-f-1",
-        targetPieceId: "b-f-1",
-        pushDirection: [1, 0] as [number, number],
-      }],
+      // w-f-3 at E2 captures forward diag right F3 (b-f-2). F3 is safe from all enemies.
+      playerMoves: [
+        { type: "capture", pieceId: "w-f-3", to: { col: 3, row: "F" } },
+      ],
     }],
   },
 
-  // ── 8: Enemy Screen ───────────────────────────────────────────
-  // Longshot using an enemy piece as the screen.
-  // Archer at B7, enemy footman at C7 (screen), enemy knight at D7 (target).
+  // ── 5: Archer's Dilemma ─────────────────────────────────────
+  // 1-move (tricky): Archer has two longshot lanes — forward and sideways.
+  // The forward target is "protected" (enemy footman can recapture next turn).
+  // The sideways target is safe. Teaches evaluating longshot consequences.
   {
-    id: 8,
-    title: "Enemy Screen",
-    objective: "White to capture with a longshot",
+    id: 5,
+    title: "Archer's Dilemma",
+    objective: "White to capture safely with a longshot",
     difficulty: "beginner",
     category: "longshot",
-    hint: "Any piece can be a screen — even an enemy piece blocking your line.",
+    hint: "Your Archer has two firing lanes — but after one longshot, the enemy can take your Archer right back.",
     boardSetup: {
       pieces: [
-        archer("w-a-1", "white", 7, "B"),    // longshot archer
-        footman("w-f-1", "white", 4, "E"),
-        footman("w-f-2", "white", 1, "F"),
-        knight("w-k-1", "white", 9, "D"),
-        archer("w-a-2", "white", 3, "C"),
-        footman("b-f-1", "black", 7, "C"),   // enemy screen
-        knight("b-k-1", "black", 7, "D"),    // TARGET
-        footman("b-f-2", "black", 4, "F"),
-        archer("b-a-1", "black", 6, "H"),
-        footman("b-f-3", "black", 10, "I"),
+        archer("w-a-1", "white", 5, "D"),    // archer with two longshot options
+        footman("w-f-1", "white", 5, "E"),   // screen for forward longshot
+        footman("w-f-2", "white", 6, "D"),   // screen for sideways longshot
+        knight("w-k-1", "white", 2, "B"),
+        footman("w-f-3", "white", 1, "F"),
+        footman("b-f-1", "black", 5, "F"),   // forward target at F5 (unsafe — b-f-2 retaliates)
+        knight("b-k-1", "black", 7, "D"),    // sideways target at D7 (safe) ✓
+        footman("b-f-2", "black", 4, "G"),   // threatens F5 (forward diag from G4: F3 and F5)
+        archer("b-a-1", "black", 8, "I"),
+        footman("b-f-3", "black", 3, "J"),
       ],
       turn: "white",
-      capturePoints: { F1: "white", F4: "black", F7: null, F10: null },
     },
     solution: [{
-      // B7 → D7 (dist 2 forward). Screen at C7 (b-f-1 — enemy). Target at D7 (b-k-1).
+      // Sideways longshot: D5 → D7 (dist 2 right). Screen at D6 (w-f-2). Target D7 (b-k-1).
+      // Forward longshot D5 → F5 is unsafe: archer lands on F5, b-f-2 at G4 captures F5 next turn.
       playerMoves: [
         { type: "longshot", pieceId: "w-a-1", targetPosition: { col: 7, row: "D" } },
       ],
     }],
+  },
+
+  // ── 6: Knight Blockade ──────────────────────────────────────
+  // 2-move: Knight's path is blocked (leg cut). Push the blocker away,
+  // then the knight can jump through to capture.
+  // Teaches leg-cut awareness and using pushback to clear knight paths.
+  {
+    id: 6,
+    title: "Knight Blockade",
+    objective: "White to capture the archer in 2 moves",
+    difficulty: "beginner",
+    category: "tactical",
+    hint: "Your Knight can't jump — its path is blocked. Can you clear the way?",
+    boardSetup: {
+      pieces: [
+        knight("w-k-1", "white", 5, "C"),    // wants to reach E6 (down 2, right 1)
+        footman("w-f-1", "white", 4, "D"),   // pusher (pushes D5 blocker sideways)
+        archer("w-a-1", "white", 7, "B"),
+        footman("w-f-2", "white", 1, "F"),
+        footman("w-f-3", "white", 3, "E"),
+        footman("b-f-1", "black", 5, "D"),   // leg blocker at D5 — pushed to D6
+        archer("b-a-1", "black", 6, "E"),    // knight's capture target at E6
+        footman("b-f-2", "black", 8, "G"),
+        knight("b-k-1", "black", 3, "H"),
+        footman("b-f-3", "black", 6, "J"),
+      ],
+      turn: "white",
+      capturePoints: { F1: "white", F4: null, F7: null, F10: null },
+    },
+    solution: [
+      {
+        // Push b-f-1 from D5 to D6 (direction [0,1] from D4)
+        playerMoves: [{
+          type: "pushback",
+          pieceId: "w-f-1",
+          targetPieceId: "b-f-1",
+          pushDirection: [0, 1] as [number, number],
+        }],
+        opponentResponse: { type: "move", pieceId: "b-f-2", to: { col: 8, row: "H" } },
+      },
+      {
+        // Knight C5 → E6 (down 2 = E, right 1 = 6). Leg D5 now empty!
+        playerMoves: [
+          { type: "capture", pieceId: "w-k-1", to: { col: 6, row: "E" } },
+        ],
+      },
+    ],
+  },
+
+  // ── 7: Capture Point Race ───────────────────────────────────
+  // 2-move: Two CPs open, but one is guarded by an enemy footman.
+  // Take the safe one first so the enemy wastes their turn, then grab the other.
+  // Teaches reading threats and sequencing.
+  {
+    id: 7,
+    title: "Capture Point Race",
+    objective: "White to seize two capture points in 2 moves",
+    difficulty: "beginner",
+    category: "checkmate",
+    hint: "One capture point is guarded — if you rush there first, you'll lose your piece. Take the safe one first.",
+    boardSetup: {
+      pieces: [
+        footman("w-f-1", "white", 1, "F"),   // on CP F1
+        footman("w-f-2", "white", 4, "E"),   // can advance to F4 (guarded!)
+        footman("w-f-3", "white", 10, "E"),  // can advance to F10 (safe) ✓
+        archer("w-a-1", "white", 6, "D"),
+        knight("w-k-1", "white", 8, "C"),
+        footman("b-f-1", "black", 3, "G"),   // threatens F4 (forward diag from G3: F2 and F4)
+        footman("b-f-2", "black", 7, "F"),   // on CP F7
+        archer("b-a-1", "black", 7, "I"),
+        knight("b-k-1", "black", 9, "J"),
+        footman("b-f-3", "black", 5, "K"),
+      ],
+      turn: "white",
+      capturePoints: { F1: "white", F4: null, F7: "black", F10: null },
+    },
+    solution: [
+      {
+        // Take F10 first (safe — no enemy can reach it)
+        playerMoves: [
+          { type: "move", pieceId: "w-f-3", to: { col: 10, row: "F" } },
+        ],
+        // Opponent advances b-f-1 from G3 to F3 (losing F4 diagonal threat angle)
+        opponentResponse: { type: "move", pieceId: "b-f-1", to: { col: 3, row: "F" } },
+      },
+      {
+        // Now take F4 (safe — b-f-1 at F3 can no longer reach F4 by diagonal)
+        playerMoves: [
+          { type: "move", pieceId: "w-f-2", to: { col: 4, row: "F" } },
+        ],
+      },
+    ],
+  },
+
+  // ── 8: Clear the Lane ───────────────────────────────────────
+  // 2-move: Longshot lane has a blocker (2nd piece = 2 screens = blocked).
+  // Push the blocker sideways to clear the lane, then fire.
+  // Teaches combining pushback with longshot.
+  {
+    id: 8,
+    title: "Clear the Lane",
+    objective: "White to capture the enemy in 2 moves",
+    difficulty: "beginner",
+    category: "longshot",
+    hint: "The longshot lane is blocked by a second piece — push it aside, then fire through the cleared path.",
+    boardSetup: {
+      pieces: [
+        archer("w-a-1", "white", 7, "C"),    // archer, longshot to F7
+        footman("w-f-1", "white", 7, "D"),   // screen for longshot
+        footman("w-f-2", "white", 6, "E"),   // pusher (pushes E7 blocker sideways)
+        knight("w-k-1", "white", 2, "B"),
+        footman("w-f-3", "white", 4, "F"),
+        footman("b-f-1", "black", 7, "E"),   // blocker in lane (gets pushed to E8)
+        footman("b-f-2", "black", 7, "F"),   // longshot target on F7
+        archer("b-a-1", "black", 3, "H"),
+        knight("b-k-1", "black", 9, "I"),
+        footman("b-f-3", "black", 5, "J"),
+      ],
+      turn: "white",
+      capturePoints: { F1: null, F4: "white", F7: "black", F10: null },
+    },
+    solution: [
+      {
+        // Push b-f-1 from E7 to E8 (direction [0,1] from E6)
+        playerMoves: [{
+          type: "pushback",
+          pieceId: "w-f-2",
+          targetPieceId: "b-f-1",
+          pushDirection: [0, 1] as [number, number],
+        }],
+        opponentResponse: { type: "move", pieceId: "b-f-3", to: { col: 5, row: "I" } },
+      },
+      {
+        // Longshot: C7 → F7 (dist 3 forward). Screen at D7. E7 now empty. Target F7.
+        playerMoves: [
+          { type: "longshot", pieceId: "w-a-1", targetPosition: { col: 7, row: "F" } },
+        ],
+      },
+    ],
   },
 
   // ═══════════════════════════════════════════════════════════════
