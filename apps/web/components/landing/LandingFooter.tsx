@@ -23,6 +23,12 @@ export function LandingFooter() {
               Tutorial
             </Link>
             <Link
+              href="/puzzle"
+              className="text-sm text-gray-500 transition-colors hover:text-gray-300"
+            >
+              Daily Puzzle
+            </Link>
+            <Link
               href="/game/bot"
               className="text-sm text-gray-500 transition-colors hover:text-gray-300"
             >

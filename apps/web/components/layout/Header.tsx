@@ -107,6 +107,12 @@ export function Header() {
                 Learn
               </Link>
               <Link
+                href="/puzzle"
+                className="text-sm text-gray-400 transition-colors hover:text-gray-200"
+              >
+                Puzzles
+              </Link>
+              <Link
                 href="/game/online"
                 className="text-sm text-gray-400 transition-colors hover:text-gray-200"
               >
@@ -256,6 +262,13 @@ export function Header() {
                 className="rounded-lg px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-800"
               >
                 Learn
+              </Link>
+              <Link
+                href="/puzzle"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-gray-800"
+              >
+                Puzzles
               </Link>
               <Link
                 href="/game/online"
