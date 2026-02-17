@@ -104,7 +104,7 @@ Now implement the Footman unit logic.
 
 ### Movement
 - Behind or At River: 1 tile forward, backward, or sideways (orthogonal only, not diagonal)
-- Beyond River: 2 tiles forward or backward, OR 1 tile sideways
+- Beyond River: up to 2 tiles forward or backward, OR 1 tile sideways
 - **First Move**: A Footman that has never moved may move 2 tiles forward on its first move (like a pawn's double-step in chess). The intermediate tile must be empty (cannot jump over pieces). This applies regardless of River position.
 - Cannot move to a tile occupied by a friendly piece
 - Cannot move off the board
@@ -145,7 +145,7 @@ Functions:
 Write thorough tests covering:
 - Movement behind river (1 tile orthogonal, all 4 directions)
 - Movement at river (1 tile orthogonal)
-- Movement beyond river (2 tiles forward/backward, 1 tile sideways)
+- Movement beyond river (up to 2 tiles forward/backward, 1 tile sideways)
 - **First move double-step: unmoved Footman can move 2 tiles forward**
 - **First move double-step: blocked by piece on intermediate tile**
 - **First move double-step: blocked by piece on destination tile**
@@ -164,7 +164,7 @@ Write thorough tests covering:
 - Promotion: footman on enemy back row with captured pieces available
 - Promotion: footman on enemy back row with no captured pieces
 - Beyond-river movement: cannot move 2 tiles sideways (only 1 sideways)
-- Beyond-river movement: 2 tiles forward blocked by piece at intermediate tile? (Clarification: footmen move 2 tiles, meaning they slide — they CANNOT jump over pieces. If a piece is in the way on the first tile, they cannot move 2 tiles in that direction.)
+- Beyond-river movement: 2 tiles forward blocked by piece at intermediate tile? (Clarification: footmen move up to 2 tiles, meaning they slide — they CANNOT jump over pieces. If a piece is in the way on the first tile, they cannot move 2 tiles in that direction.)
 
 Run all tests and ensure they pass.
 ```

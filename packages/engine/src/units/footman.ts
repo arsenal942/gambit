@@ -52,7 +52,7 @@ function isSidewaysDir(rowDelta: number): boolean {
  * Returns all legal movement positions for a Footman.
  *
  * Behind or At River: 1 tile forward, backward, or sideways (orthogonal only)
- * Beyond River: 2 tiles forward or backward, OR 1 tile sideways
+ * Beyond River: up to 2 tiles forward or backward, OR 1 tile sideways
  * First-move double-step: 2 tiles forward if hasMoved === false (cannot jump)
  */
 export function getFootmanMoves(piece: Piece, gameState: GameState): Position[] {
@@ -73,38 +73,42 @@ export function getFootmanMoves(piece: Piece, gameState: GameState): Position[] 
       moves.push(target);
     }
   } else {
-    // Beyond river: 2 tiles forward or backward, 1 tile sideways
+    // Beyond river: up to 2 tiles forward or backward, 1 tile sideways
     const fwd = getForwardDirection(player);
 
-    // 2 tiles forward
+    // Forward: 1 or 2 tiles
     {
-      const intermediate = offsetPosition(position, fwd, 0);
-      if (intermediate && isValidPosition(intermediate)) {
-        const intOccupant = getPieceAt(board, intermediate);
-        if (!intOccupant) {
-          const target = offsetPosition(position, fwd * 2, 0);
-          if (target && isValidPosition(target)) {
-            const occupant = getPieceAt(board, target);
-            if (!occupant) {
-              moves.push(target);
+      const oneStep = offsetPosition(position, fwd, 0);
+      if (oneStep && isValidPosition(oneStep)) {
+        const oneOccupant = getPieceAt(board, oneStep);
+        if (!oneOccupant) {
+          moves.push(oneStep);
+          // 2 tiles forward (only if 1-tile was clear)
+          const twoStep = offsetPosition(position, fwd * 2, 0);
+          if (twoStep && isValidPosition(twoStep)) {
+            const twoOccupant = getPieceAt(board, twoStep);
+            if (!twoOccupant) {
+              moves.push(twoStep);
             }
           }
         }
       }
     }
 
-    // 2 tiles backward
+    // Backward: 1 or 2 tiles
     {
       const bwd = -fwd;
-      const intermediate = offsetPosition(position, bwd, 0);
-      if (intermediate && isValidPosition(intermediate)) {
-        const intOccupant = getPieceAt(board, intermediate);
-        if (!intOccupant) {
-          const target = offsetPosition(position, bwd * 2, 0);
-          if (target && isValidPosition(target)) {
-            const occupant = getPieceAt(board, target);
-            if (!occupant) {
-              moves.push(target);
+      const oneStep = offsetPosition(position, bwd, 0);
+      if (oneStep && isValidPosition(oneStep)) {
+        const oneOccupant = getPieceAt(board, oneStep);
+        if (!oneOccupant) {
+          moves.push(oneStep);
+          // 2 tiles backward (only if 1-tile was clear)
+          const twoStep = offsetPosition(position, bwd * 2, 0);
+          if (twoStep && isValidPosition(twoStep)) {
+            const twoOccupant = getPieceAt(board, twoStep);
+            if (!twoOccupant) {
+              moves.push(twoStep);
             }
           }
         }

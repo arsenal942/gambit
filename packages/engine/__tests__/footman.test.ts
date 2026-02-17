@@ -130,8 +130,8 @@ describe("getFootmanMoves", () => {
     });
   });
 
-  describe("beyond river (2 tiles forward/backward, 1 tile sideways)", () => {
-    it("white footman on H5 (beyond river) moves 2 fwd, 2 bwd, 1 sideways", () => {
+  describe("beyond river (up to 2 tiles forward/backward, 1 tile sideways)", () => {
+    it("white footman on H5 (beyond river) moves 1-2 fwd, 1-2 bwd, 1 sideways", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
@@ -141,14 +141,16 @@ describe("getFootmanMoves", () => {
       const state = makeState({ board });
       const moves = getFootmanMoves(piece, state);
 
+      expect(includesPos(moves, { col: 5, row: "I" })).toBe(true);  // 1 forward
       expect(includesPos(moves, { col: 5, row: "J" })).toBe(true);  // 2 forward
+      expect(includesPos(moves, { col: 5, row: "G" })).toBe(true);  // 1 backward
       expect(includesPos(moves, { col: 5, row: "F" })).toBe(true);  // 2 backward
       expect(includesPos(moves, { col: 4, row: "H" })).toBe(true);  // 1 left
       expect(includesPos(moves, { col: 6, row: "H" })).toBe(true);  // 1 right
-      expect(moves).toHaveLength(4);
+      expect(moves).toHaveLength(6);
     });
 
-    it("black footman on D5 (beyond river) moves 2 fwd, 2 bwd, 1 sideways", () => {
+    it("black footman on D5 (beyond river) moves 1-2 fwd, 1-2 bwd, 1 sideways", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "black",
@@ -159,11 +161,13 @@ describe("getFootmanMoves", () => {
       const moves = getFootmanMoves(piece, state);
 
       // Black forward = toward A
+      expect(includesPos(moves, { col: 5, row: "C" })).toBe(true);  // 1 forward
       expect(includesPos(moves, { col: 5, row: "B" })).toBe(true);  // 2 forward
+      expect(includesPos(moves, { col: 5, row: "E" })).toBe(true);  // 1 backward
       expect(includesPos(moves, { col: 5, row: "F" })).toBe(true);  // 2 backward
       expect(includesPos(moves, { col: 4, row: "D" })).toBe(true);  // 1 left
       expect(includesPos(moves, { col: 6, row: "D" })).toBe(true);  // 1 right
-      expect(moves).toHaveLength(4);
+      expect(moves).toHaveLength(6);
     });
 
     it("cannot move 2 tiles sideways beyond river", () => {
@@ -180,14 +184,14 @@ describe("getFootmanMoves", () => {
       expect(includesPos(moves, { col: 7, row: "H" })).toBe(false);  // 2 right
     });
 
-    it("2 tiles forward blocked by piece on intermediate tile", () => {
+    it("forward blocked by piece on 1-tile position blocks both 1 and 2 forward", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
         position: { col: 5, row: "H" },
         hasMoved: true,
       }));
-      // Block intermediate tile (I5)
+      // Block intermediate tile (I5) — also the 1-tile forward destination
       placePiece(board, makePiece({
         id: "blocker",
         player: "white",
@@ -197,10 +201,11 @@ describe("getFootmanMoves", () => {
       const state = makeState({ board });
       const moves = getFootmanMoves(piece, state);
 
+      expect(includesPos(moves, { col: 5, row: "I" })).toBe(false);  // 1 forward blocked
       expect(includesPos(moves, { col: 5, row: "J" })).toBe(false);  // 2 forward blocked
     });
 
-    it("2 tiles forward blocked by piece on destination tile", () => {
+    it("2 tiles forward blocked by piece on destination but 1 tile forward available", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
@@ -217,17 +222,18 @@ describe("getFootmanMoves", () => {
       const state = makeState({ board });
       const moves = getFootmanMoves(piece, state);
 
-      expect(includesPos(moves, { col: 5, row: "J" })).toBe(false);
+      expect(includesPos(moves, { col: 5, row: "I" })).toBe(true);   // 1 forward available
+      expect(includesPos(moves, { col: 5, row: "J" })).toBe(false);  // 2 forward blocked
     });
 
-    it("2 tiles backward blocked by piece on intermediate tile", () => {
+    it("backward blocked by piece on 1-tile position blocks both 1 and 2 backward", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
         position: { col: 5, row: "H" },
         hasMoved: true,
       }));
-      // Block intermediate tile (G5)
+      // Block intermediate tile (G5) — also the 1-tile backward destination
       placePiece(board, makePiece({
         id: "blocker",
         player: "black",
@@ -237,6 +243,7 @@ describe("getFootmanMoves", () => {
       const state = makeState({ board });
       const moves = getFootmanMoves(piece, state);
 
+      expect(includesPos(moves, { col: 5, row: "G" })).toBe(false);  // 1 backward blocked
       expect(includesPos(moves, { col: 5, row: "F" })).toBe(false);  // 2 backward blocked
     });
   });
@@ -292,14 +299,15 @@ describe("getFootmanMoves", () => {
       const state = makeState({ board });
       const moves = getFootmanMoves(piece, state);
 
-      // Beyond river for white. Forward 2 = off board. Backward 2 = I10.
+      // Beyond river for white. Forward = off board. Backward 1 = J10, backward 2 = I10.
       // Sideways right = off board. Sideways left = K9.
+      expect(includesPos(moves, { col: 10, row: "J" })).toBe(true);  // 1 backward
       expect(includesPos(moves, { col: 10, row: "I" })).toBe(true);  // 2 backward
       expect(includesPos(moves, { col: 9, row: "K" })).toBe(true);   // 1 left
-      expect(moves).toHaveLength(2);
+      expect(moves).toHaveLength(3);
     });
 
-    it("beyond river, 2 tiles forward goes off board", () => {
+    it("beyond river, 2 tiles forward goes off board but 1 tile forward available", () => {
       const board = createEmptyBoard();
       const piece = placePiece(board, makePiece({
         player: "white",
@@ -309,11 +317,13 @@ describe("getFootmanMoves", () => {
       const state = makeState({ board });
       const moves = getFootmanMoves(piece, state);
 
-      // 2 forward from J = L (off board) — not available
+      // 2 forward from J = L (off board) — not available. 1 forward = K (available).
+      expect(includesPos(moves, { col: 5, row: "K" })).toBe(true);  // 1 forward
+      expect(includesPos(moves, { col: 5, row: "I" })).toBe(true);  // 1 backward
       expect(includesPos(moves, { col: 5, row: "H" })).toBe(true);  // 2 backward
       expect(includesPos(moves, { col: 4, row: "J" })).toBe(true);  // 1 left
       expect(includesPos(moves, { col: 6, row: "J" })).toBe(true);  // 1 right
-      expect(moves).toHaveLength(3);
+      expect(moves).toHaveLength(5);
     });
   });
 

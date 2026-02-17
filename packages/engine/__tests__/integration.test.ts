@@ -398,14 +398,15 @@ describe("Group 2: Footman Mechanics Deep Dive", () => {
     const f5Moves = checkMovesAt("F", true);
     expect(f5Moves).toHaveLength(4);
 
-    // Beyond river (G5): 2 fwd/bwd, 1 sideways
+    // Beyond river (G5): up to 2 fwd/bwd, 1 sideways
     const g5Moves = checkMovesAt("G", true);
+    expect(includesPos(g5Moves, pos("H", 5))).toBe(true);  // 1 forward (G→H)
     expect(includesPos(g5Moves, pos("I", 5))).toBe(true);  // 2 forward (G→I)
+    expect(includesPos(g5Moves, pos("F", 5))).toBe(true);  // 1 backward (G→F)
     expect(includesPos(g5Moves, pos("E", 5))).toBe(true);  // 2 backward (G→E)
     expect(includesPos(g5Moves, pos("G", 4))).toBe(true);  // 1 left
     expect(includesPos(g5Moves, pos("G", 6))).toBe(true);  // 1 right
-    expect(includesPos(g5Moves, pos("H", 5))).toBe(false); // NOT 1 forward
-    expect(g5Moves).toHaveLength(4);
+    expect(g5Moves).toHaveLength(6);
 
     // Capture directions: behind = forward diagonal only, beyond = all 4
     function checkCapturesAt(row: string) {
@@ -1786,7 +1787,7 @@ describe("Group 9: Full Game Simulations", () => {
     ], { turn: "black" });
 
     // bf at A1 (beyond river for black):
-    // Moves: fwd 2 off board; bwd 2 through B1(w2) blocked; sideways A0(off)/A2(w1) blocked
+    // Moves: fwd 1+2 off board; bwd 1 B1(w2) blocked; sideways A0(off)/A2(w1) blocked
     // Captures: [-1,-1]=off, [-1,1]=off, [1,-1]=B0(off), [1,1]=B2(ba=friendly) blocked
     // Push w1(A2): all dest blocked. Push w2(B1): all dest blocked.
     //
@@ -2095,9 +2096,10 @@ describe("Group 12: Board Edge & Corner Cases", () => {
     const wf = getPieceAt(state.board, pos("K", 10))!;
     const moves = getFootmanMoves(wf, state);
 
-    // K10 beyond river for white. 2 forward: off board (past K).
-    // 2 backward: I10 (through J10, empty). 1 sideways: K9 (K11 off board).
-    expect(moves).toHaveLength(2);
+    // K10 beyond river for white. Forward: off board (past K).
+    // 1 backward: J10. 2 backward: I10 (through J10, empty). 1 sideways: K9 (K11 off board).
+    expect(moves).toHaveLength(3);
+    expect(includesPos(moves, pos("J", 10))).toBe(true);
     expect(includesPos(moves, pos("I", 10))).toBe(true);
     expect(includesPos(moves, pos("K", 9))).toBe(true);
   });
@@ -2239,9 +2241,11 @@ describe("Group 13: River Boundary Precision", () => {
     const wf = getPieceAt(state.board, pos("G", 5))!;
     const moves = getFootmanMoves(wf, state);
 
-    // Beyond river: 2 forward (I5), 2 backward (E5), 1 sideways (G4, G6)
-    expect(moves).toHaveLength(4);
+    // Beyond river: 1 forward (H5), 2 forward (I5), 1 backward (F5), 2 backward (E5), 1 sideways (G4, G6)
+    expect(moves).toHaveLength(6);
+    expect(includesPos(moves, pos("H", 5))).toBe(true);
     expect(includesPos(moves, pos("I", 5))).toBe(true);
+    expect(includesPos(moves, pos("F", 5))).toBe(true);
     expect(includesPos(moves, pos("E", 5))).toBe(true);
     expect(includesPos(moves, pos("G", 4))).toBe(true);
     expect(includesPos(moves, pos("G", 6))).toBe(true);
@@ -2292,9 +2296,11 @@ describe("Group 13: River Boundary Precision", () => {
     expect(getRiverStatus(pos("E", 5), "black")).toBe("beyond");
     const bfE = getPieceAt(stateE.board, pos("E", 5))!;
     const movesE = getFootmanMoves(bfE, stateE);
-    // Beyond: 2 forward (C5), 2 backward (G5), 1 sideways (E4, E6)
-    expect(movesE).toHaveLength(4);
+    // Beyond: 1 forward (D5), 2 forward (C5), 1 backward (F5), 2 backward (G5), 1 sideways (E4, E6)
+    expect(movesE).toHaveLength(6);
+    expect(includesPos(movesE, pos("D", 5))).toBe(true);
     expect(includesPos(movesE, pos("C", 5))).toBe(true);
+    expect(includesPos(movesE, pos("F", 5))).toBe(true);
     expect(includesPos(movesE, pos("G", 5))).toBe(true);
     expect(includesPos(movesE, pos("E", 4))).toBe(true);
     expect(includesPos(movesE, pos("E", 6))).toBe(true);
@@ -3059,12 +3065,12 @@ describe("Group 19: First-Move Double-Step Edge Cases", () => {
     const wf = getPieceAt(state.board, pos("G", 5))!;
     const moves = getFootmanMoves(wf, state);
 
-    // Beyond river: 2 fwd (I5), 2 bwd (E5), 1 sideways (G4, G6)
+    // Beyond river: 1 fwd (H5), 2 fwd (I5), 1 bwd (F5), 2 bwd (E5), 1 sideways (G4, G6)
     // First-move double-step: 2 fwd (I5) — same as beyond-river forward
     // I5 should appear exactly once (dedup)
     const i5Count = moves.filter((m) => posEq(m, pos("I", 5))).length;
     expect(i5Count).toBe(1);
-    expect(moves).toHaveLength(4);
+    expect(moves).toHaveLength(6);
   });
 });
 

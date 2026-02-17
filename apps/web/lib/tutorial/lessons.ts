@@ -166,7 +166,7 @@ const lesson1: TutorialLesson = {
       summaryPoints: [
         "Footmen move 1 tile forward, backward, or sideways (never diagonally)",
         "First move: can leap 2 tiles forward (one-time bonus)",
-        "Beyond the River: 2 tiles forward/backward, but only 1 sideways",
+        "Beyond the River: up to 2 tiles forward/backward, but only 1 sideways",
         "The River divides the board and changes movement rules",
       ],
     },

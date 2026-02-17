@@ -46,7 +46,7 @@ Four **Capture Points** (flagged tiles at F1, F4, F7, F10) are the focus of terr
 #### Footmen — *Frontline Brawlers*
 | | Behind / At River | Beyond River |
 |---|---|---|
-| **Move** | 1 tile forward, backward, or sideways | 2 tiles forward/backward, or 1 sideways |
+| **Move** | 1 tile forward, backward, or sideways | Up to 2 tiles forward/backward, or 1 sideways |
 | **Capture** | 1 tile diagonally forward | 1 tile diagonally (any direction) |
 
 **First Move** — A Footman that hasn't moved yet can move 2 tiles forward (like a pawn in chess). Cannot jump over pieces.

@@ -1300,10 +1300,8 @@ export const PUZZLES: Puzzle[] = [
         opponentResponse: { type: "move", pieceId: "b-f-2", to: { col: 7, row: "J" } },
       },
       {
-        // w-f-1 now at J6. Beyond river. 2 tiles forward = L6 (invalid) or K6 (1 tile).
-        // Wait, beyond river movement: 2 forward/back, 1 sideways.
-        // J6 (row J=9) + 1 forward = K6 (row 10). That's within bounds. But 2 forward = row 11 = invalid.
-        // So w-f-1 at J6 can move to K6 (1 forward), or 2 backward, or 1 sideways.
+        // w-f-1 now at J6. Beyond river: up to 2 forward/back, 1 sideways.
+        // 1 forward = K6. 2 forward = off board.
         // K6 is the enemy back row → promotion!
         playerMoves: [
           { type: "move", pieceId: "w-f-1", to: { col: 6, row: "K" } },
